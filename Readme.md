@@ -21,3 +21,4 @@ Where the valid argument types are `string` and `int32` at time of writing.
 Aside from figuring out all of the opcodes and the file format of the strat files:
 
  * Cleaner parsing and an actual intermediate representation (useful for adding labels and processing things in general)
+ * Reimplement in C, once the bytecode format is mostly known

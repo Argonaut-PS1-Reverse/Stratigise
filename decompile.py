@@ -1,11 +1,18 @@
 #!/usr/bin/python
 
+"""
+Stratigise: Prototyping argounaut bytecode disassembler
+"""
+
 import struct
 import sys
 
 class BinaryReadStream:
 	"""
-	A binary file stream supporting only needed operations
+	A binary file stream supporting only needed operations.
+	
+	TODO: There is probably some more standardised way to do this that I still
+	need to find out about.
 	"""
 	
 	def __init__(self, path):
@@ -101,66 +108,155 @@ def formathex(n):
 	return "0x" + '{:08X}'.format(n)
 
 # Load the opcodes from opcodes.py
+# TODO: At least make it *look* better.
 f = open('opcodes.py', 'r')
 OP_TABLE = eval(f.read())
 f.close()
 
-def print_nnl(x): print(x, end='')
+class Instruction:
+	"""
+	An instruction from the bytecode
+	"""
+	
+	def __init__(self, opcode, arguments = [], location = -1):
+		"""
+		Initialise an instruction, given its name, arguments and location.
+		"""
+		
+		self.opcode = opcode
+		self.arguments = arguments
+		self.location = location
+	
+	def getString(self):
+		"""
+		Convert the instruction to a representation as a string.
+		"""
+		
+		string = ""
+		
+		if (self.opcode in OP_TABLE):
+			# Write opcode name
+			string += str(OP_TABLE[self.opcode][0])
+			
+			# Parse opcode arguments
+			arg = 0
+			while (arg < len(OP_TABLE[self.opcode]) - 1):
+				# Get the type of argument
+				type = OP_TABLE[self.opcode][arg + 1]
+				
+				string += ' '
+				
+				# Based on the type, format the value appropraitely
+				if (type == 'string'):  string += self.arguments[arg]
+				elif (type == 'int32'): string += str(self.arguments[arg])
+				
+				arg += 1
+			
+			string += f"    ; Location: {formathex(self.location)}"
+		
+		else:
+			string += f"; Unknown opcode: {formathex(self.opcode)}"
+		
+		return string
 
-def dissassemble(path, output):
+class StratInstructionList:
+	"""
+	A class containing each instruction as one entry in an arry with arguments.
+	"""
+	
+	def __init__(self, preamble = None):
+		"""
+		Initialise the instruction list.
+		"""
+		
+		self.preamble = "" if type(preamble) != str else preamble
+		self.stream = []
+	
+	def setPreamble(self, preamble):
+		"""
+		Set the preamble (i.e. starting comment, usually containg other info)
+		"""
+		
+		self.preamble = preamble
+	
+	def addInstruction(self, instruction):
+		"""
+		Add an instruction to the stream.
+		"""
+		
+		self.stream.append(instruction)
+	
+	def writePrint(self):
+		"""
+		Print the contents of an instruction stream.
+		"""
+		
+		for s in self.stream:
+			print(s.getString())
+	
+	def writeFile(self, path):
+		"""
+		Write the contents of an instruction stream to a file.
+		"""
+		
+		f = open(path, "w")
+		
+		for s in self.stream:
+			f.write(s.getString() + "\n")
+		
+		f.close()
+
+def disassemble(path, output):
 	"""
 	Disassemble a strat
 	"""
 	
 	strat = BinaryReadStream(path)
-	output = open(output, "w")
+	instructions = StratInstructionList()
 	
+	# Read strat header
 	size = strat.readInt32LE()
 	secondint = strat.readInt32BE()
 	
-	output.write(f"; Strat was {size} bytes long.\n")
-	output.write(f"; Second bytes were {formathex(secondint)}\n")
+	# Set starting comment
+	instructions.setPreamble(f"; Strat was {size} bytes long.\n; Second bytes were {formathex(secondint)}\n")
 	
+	# Read in opcodes
 	while (True):
 		start = strat.getPos()
 		opcode = strat.readInt32BE()
 		
 		# Break on EOF or incomplete opcode
 		if (opcode == None):
+			print("Warning: Incomplete opcode, probably just before EOF due to unrecognised instruction with string arguments.")
 			break
 		
 		# Write opcode based on arguments in table
-		elif (opcode in OP_TABLE):
-			# Write opcode name
-			output.write(OP_TABLE[opcode][0])
+		else:
+			args = []
 			
 			# Parse opcode arguments
-			arg = 1
-			while (arg < len(OP_TABLE[opcode])):
-				# Get the type of argument
-				type = OP_TABLE[opcode][arg]
-				
-				output.write(' ')
-				
-				# Based on the type, format the value appropraitely
-				if (type == 'string'):
-					output.write('"' + strat.readString() + '"')
-				elif (type == 'int32'):
-					output.write(str(strat.readInt32LE()))
-				
-				arg += 1
+			if (opcode in OP_TABLE):
+				for arg in range(1, len(OP_TABLE[opcode])):
+					type = OP_TABLE[opcode][arg]
+					
+					# Based on the type, format the next value in the
+					# instruction stream appropraitely
+					if (type == 'string'):
+						args.append('"' + strat.readString() + '"')
+					elif (type == 'int32'):
+						args.append(str(strat.readInt32LE()))
+					
+					arg += 1
 			
-			# Write location comment
-			output.write(f"     ; at {formathex(start)}")
-			output.write("\n")
-		
-		# Unknown opcode comment
-		else:
-			output.write(f"; Unknown opcode: {formathex(opcode)}\n")
-			pass
+			# Add instruction to bytecode tokens
+			instructions.addInstruction(Instruction(opcode, args, start))
+	
+	# Write disassembled file
+	instructions.writeFile(output)
 
 def main(path):
-	dissassemble(path, path + ".DIS")
+	disassemble(path, path + ".DIS")
 
 if (__name__ == "__main__"):
 	main(sys.argv[1])
