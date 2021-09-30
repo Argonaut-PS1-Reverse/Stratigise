@@ -82,6 +82,18 @@ class BinaryReadStream:
 		
 		return struct.unpack(">i", b)[0]
 	
+	def readInt16BE(self):
+		"""
+		Read and return a 16-bit big-endian integer.
+		"""
+		
+		b = self.file.read(2)
+		
+		if (len(b) != 2):
+			return None
+		
+		return struct.unpack(">h", b)[0]
+	
 	def readString(self):
 		"""
 		Read and return a NUL terminated string.
@@ -149,6 +161,7 @@ class Instruction:
 				# Based on the type, format the value appropraitely
 				if (type == 'string'):  string += self.arguments[arg]
 				elif (type == 'int32'): string += str(self.arguments[arg])
+				elif (type == 'int16'): string += str(self.arguments[arg])
 				
 				arg += 1
 			
@@ -245,7 +258,9 @@ def disassemble(path, output):
 					if (type == 'string'):
 						args.append('"' + strat.readString() + '"')
 					elif (type == 'int32'):
-						args.append(str(strat.readInt32LE()))
+						args.append(str(strat.readInt32BE()))
+					elif (type == 'int16'):
+						args.append(str(strat.readInt16BE()))
 					
 					arg += 1
 			
