@@ -7,10 +7,18 @@ Stratigise: Prototyping argounaut bytecode disassembler
 import struct
 import sys
 
+def printUsageAndExit():
+	print(f"Usage: {sys.argv[0]} [opcodes=OPCODEFILE] file1 file2 ...")
+	print("\topcodes: Set the opcodes for all of the files after the file is set. Set to croc1 by default. Possible values:")
+	print("\t\tcroc1, croc2")
+	print("\tfiles: Any number of files to process.")
+	
+	sys.exit(127)
+
 # The dynamic opcode table
 OP_TABLE = None
 
-def loadOpcodes(name = "opcodes"):
+def loadOpcodes(name = "croc1"):
 	"""
 	Load a set of opcodes
 	"""
@@ -287,9 +295,8 @@ def main(params):
 	Load default opcodes, then preform all commands
 	"""
 	
-	if (len(params) == 0):
-		print("Usage: decompile.py [opcodes=OPCODEFILE] file1 file2 ...")
-		return
+	if (len(params) == 0 or params[0] == "--help" or params[0] == "-h"):
+		printUsageAndExit()
 	
 	loadOpcodes()
 	
@@ -297,6 +304,7 @@ def main(params):
 		cmd = cmd.split('=')
 		
 		if (cmd[0] == 'opcodes'):
+			print(f"Loading opcodes for {cmd[0]}...")
 			loadOpcodes(cmd[1])
 		else:
 			print(f"Processing {cmd[0]}...")
