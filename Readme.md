@@ -2,17 +2,23 @@
 
 This is a proof of concept/WIP dissassembler meant to aid in understanding what strats are doing. It cannot reassemble strats at the moment and isn't meant for serious use.
 
-This is mainly meant for Croc 1 strats, but maybe it will be helpful with strats from other games, too.
+This is mainly meant for the Croc games' strats, but maybe it will be helpful with strats from other games, too. The only game it is known for sure not to work with is the PSX demo of Croc 1 since the instruction sizes are different between versions.
 
 ## Usage
 
-To disassemble a strat, put it as `decompile.py`'s first argument:
+To disassemble a single strat, put it as `decompile.py`'s first argument:
 
 ```zsh
 $ ./decompile.py /path/to/the/STRAT.BIN
 ```
 
 It will output a file with the original name plus the `.DIS` extension.
+
+Advnaced usage:
+
+```
+decompile.py optable=OPTABLE1 file1 file2 ... optable=OPTABLE2 file3 file4 ...
+```
 
 ## Adding Opcodes
 

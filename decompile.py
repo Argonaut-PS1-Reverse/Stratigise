@@ -7,6 +7,22 @@ Stratigise: Prototyping argounaut bytecode disassembler
 import struct
 import sys
 
+# The dynamic opcode table
+OP_TABLE = None
+
+def loadOpcodes(name = "opcodes"):
+	"""
+	Load a set of opcodes
+	"""
+	
+	global OP_TABLE
+	
+	f = open(name + '.py', 'r')
+	OP_TABLE = eval(f.read())
+	f.close()
+
+################################################################################
+
 class BinaryReadStream:
 	"""
 	A binary file stream supporting only needed operations.
@@ -112,18 +128,14 @@ class BinaryReadStream:
 		
 		return string
 
+################################################################################
+
 def formathex(n):
 	"""
 	Format 32-bit integer as hexidecimal
 	"""
 	n = n if (n >= 0) else (-n) + (1 << 31)
 	return "0x" + '{:08X}'.format(n)
-
-# Load the opcodes from opcodes.py
-# TODO: At least make it *look* better.
-f = open('opcodes.py', 'r')
-OP_TABLE = eval(f.read())
-f.close()
 
 class Instruction:
 	"""
@@ -241,7 +253,7 @@ def disassemble(path, output):
 		
 		# Break on EOF or incomplete opcode
 		if (opcode == None):
-			print("Warning: Incomplete opcode, probably just before EOF due to unrecognised instruction with string arguments.")
+			print("Warning: Incomplete opcode, probably just before EOF due to unrecognised instruction with variable length arguments.")
 			break
 		
 		# Write opcode based on arguments in table
@@ -270,8 +282,25 @@ def disassemble(path, output):
 	# Write disassembled file
 	instructions.writeFile(output)
 
-def main(path):
-	disassemble(path, path + ".DIS")
+def main(params):
+	"""
+	Load default opcodes, then preform all commands
+	"""
+	
+	if (len(params) == 0):
+		print("Usage: decompile.py [opcodes=OPCODEFILE] file1 file2 ...")
+		return
+	
+	loadOpcodes()
+	
+	for cmd in params:
+		cmd = cmd.split('=')
+		
+		if (cmd[0] == 'opcodes'):
+			loadOpcodes(cmd[1])
+		else:
+			print(f"Processing {cmd[0]}...")
+			disassemble(cmd[0], cmd[0] + ".DIS")
 
 if (__name__ == "__main__"):
-	main(sys.argv[1])
+	main(sys.argv[1:])
