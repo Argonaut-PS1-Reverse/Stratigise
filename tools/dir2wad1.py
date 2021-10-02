@@ -28,7 +28,7 @@ def makeWad(input, output):
 		print(f"Write file: {f}")
 		
 		# read file content
-		candidate_file = open(join(output, f), "rb")
+		candidate_file = open(join(input, f), "rb")
 		content = candidate_file.read()
 		candidate_file.close()
 		
