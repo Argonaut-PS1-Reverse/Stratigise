@@ -1,18 +1,18 @@
-                             stratOperationTable                             XREF[1]:     stProcessStrategies:8002c7f0(R)  
+                             strat_jump_table                                XREF[1]:     stProcessStrategies:8002c7f0(R)  
         8006ac70 a8 a0 02 80     addr       stCommandError
-        8006ac74 48 6e 02 80     addr       IncrementIntAtAddress
-        8006ac78 98 6e 02 80     addr       LAB_80026e98
-        8006ac7c 70 6e 02 80     addr       LAB_80026e70
-        8006ac80 5c 6e 02 80     addr       LAB_80026e5c
-        8006ac84 84 6e 02 80     addr       LAB_80026e84
+        8006ac74 48 6e 02 80     addr       stLoadObject
+        8006ac78 98 6e 02 80     addr       stLoadSprite
+        8006ac7c 70 6e 02 80     addr       stLoadAnim
+        8006ac80 5c 6e 02 80     addr       stLoadSample
+        8006ac84 84 6e 02 80     addr       stLoadAnimFlag
         8006ac88 50 86 02 80     addr       stTurnTowardX
         8006ac8c 74 87 02 80     addr       stTurnTowardY
         8006ac90 20 92 02 80     addr       stTurnTowardWaypointX
         8006ac94 ec 72 02 80     addr       stPlaySound
         8006ac98 04 74 02 80     addr       stStopSound
         8006ac9c 50 74 02 80     addr       stPlayAnim
-        8006aca0 cc 74 02 80     addr       LAB_800274cc
-        8006aca4 f0 74 02 80     addr       LAB_800274f0
+        8006aca0 cc 74 02 80     addr       stStopAnim
+        8006aca4 f0 74 02 80     addr       stWaitAnimend
         8006aca8 50 76 02 80     addr       stPrint
         8006acac 60 85 02 80     addr       stSpecialFXOn
         8006acb0 c0 76 02 80     addr       stWait
@@ -28,13 +28,13 @@
         8006acd8 ec 7b 02 80     addr       stSwitch
         8006acdc d8 7c 02 80     addr       stEndCase
         8006ace0 20 a6 02 80     addr       stProcCall
-        8006ace4 6c b7 02 80     addr       LAB_8002b76c
+        8006ace4 6c b7 02 80     addr       stResetPosition
         8006ace8 74 a6 02 80     addr       stGoto
         8006acec 68 7d 02 80     addr       stScaleX
         8006acf0 a8 7d 02 80     addr       stScaleY
         8006acf4 e8 7d 02 80     addr       stScaleZ
         8006acf8 28 7e 02 80     addr       stJump
-        8006acfc 3c 7f 02 80     addr       LAB_80027f3c
+        8006acfc 3c 7f 02 80     addr       stFall
         8006ad00 8c 7f 02 80     addr       stMoveBackward
         8006ad04 78 83 02 80     addr       stMoveForward
         8006ad08 18 84 02 80     addr       stMoveRight
@@ -52,7 +52,7 @@
         8006ad38 e8 9e 02 80     addr       stKillTrigger
         8006ad3c a8 a0 02 80     addr       stCommandError
         8006ad40 d4 9f 02 80     addr       stEndTrigger
-        8006ad44 94 6d 02 80     addr       LAB_80026d94
+        8006ad44 94 6d 02 80     addr       stRemove
         8006ad48 60 a1 02 80     addr       stLetGVar
         8006ad4c fc a0 02 80     addr       stLetPGVar
         8006ad50 ac a3 02 80     addr       stLetAVar
@@ -65,82 +65,82 @@
         8006ad6c dc a8 02 80     addr       stSetAnim
         8006ad70 88 88 02 80     addr       stTurnTowardXY
         8006ad74 a8 a0 02 80     addr       stCommandError
-        8006ad78 00 6e 02 80     addr       LAB_80026e00
+        8006ad78 00 6e 02 80     addr       stHold
         8006ad7c a8 6d 02 80     addr       stRelease
         8006ad80 10 b3 02 80     addr       stInc
-        8006ad84 00 b8 02 80     addr       LAB_8002b800
-        8006ad88 24 b8 02 80     addr       LAB_8002b824
+        8006ad84 00 b8 02 80     addr       stPlayerAttackOn
+        8006ad88 24 b8 02 80     addr       stPlayerAttackOff
         8006ad8c c4 b5 02 80     addr       stCamWobble
         8006ad90 00 b5 02 80     addr       stLookAtMe
         8006ad94 04 bb 02 80     addr       stShadowSize
-        8006ad98 40 bb 02 80     addr       LAB_8002bb40
-        8006ad9c a4 74 02 80     addr       LAB_800274a4
-        8006ada0 08 7f 02 80     addr       LAB_80027f08
+        8006ad98 40 bb 02 80     addr       stShadowType
+        8006ad9c a4 74 02 80     addr       stClearAnim
+        8006ada0 08 7f 02 80     addr       stStopFall
         8006ada4 b8 81 02 80     addr       stSetPlayerPosRel
-        8006ada8 64 3f 04 80     addr       LAB_80043f64
-        8006adac 84 3f 04 80     addr       LAB_80043f84
+        8006ada8 64 3f 04 80     addr       stCollectKey
+        8006adac 84 3f 04 80     addr       stRemoveKey
         8006adb0 a8 a0 02 80     addr       stCommandError
         8006adb4 a8 a0 02 80     addr       stCommandError
         8006adb8 74 6a 02 80     addr       stCollisionOn
         8006adbc e8 6a 02 80     addr       stCollisionOff
-        8006adc0 cc a6 02 80     addr       LAB_8002a6cc
-        8006adc4 48 a7 02 80     addr       LAB_8002a748
-        8006adc8 24 b7 02 80     addr       LAB_8002b724
+        8006adc0 cc a6 02 80     addr       stPauseTriggers
+        8006adc4 48 a7 02 80     addr       stUnpauseTriggers
+        8006adc8 24 b7 02 80     addr       stSetPosition
         8006adcc c4 a9 02 80     addr       stIsPlayer
         8006add0 24 75 02 80     addr       stIfJumping
         8006add4 88 75 02 80     addr       stIfFalling
         8006add8 20 7d 02 80     addr       stScale
         8006addc 24 93 02 80     addr       stTurnTowardWaypointY
-        8006ade0 ac 6e 02 80     addr       LAB_80026eac
-                             PTR_LAB_8006ade4                                XREF[1]:     rcos:80053ffc(R)  
-        8006ade4 d0 6e 02 80     addr       LAB_80026ed0
+        8006ade0 ac 6e 02 80     addr       stHide
+                             PTR_stUnhide_8006ade4                           XREF[1]:     rcos:80053ffc(R)  
+        8006ade4 d0 6e 02 80     addr       stUnhide
         8006ade8 bc a1 02 80     addr       stLetXGVar
         8006adec ac b6 02 80     addr       stSetCamHeight
         8006adf0 ec ad 02 80     addr       stSetLevel
-        8006adf4 bc ba 02 80     addr       LAB_8002babc
-        8006adf8 e0 ba 02 80     addr       LAB_8002bae0
-        8006adfc 30 29 04 80     addr       LAB_80042930
-        8006ae00 08 29 04 80     addr       LAB_80042908
+        8006adf4 bc ba 02 80     addr       stShadowOn
+        8006adf8 e0 ba 02 80     addr       stShadowOff
+        8006adfc 30 29 04 80     addr       stAccelerate
+        8006ae00 08 29 04 80     addr       stDecelerate
         8006ae04 9c a8 02 80     addr       stSetAnimSpeed
         8006ae08 e4 b6 02 80     addr       stSetCamDist
         8006ae0c 20 a0 02 80     addr       stUserTrigger
-        8006ae10 cc a2 02 80     addr       LAB_8002a2cc
-        8006ae14 04 6c 02 80     addr       LAB_80026c04
-        8006ae18 4c b8 02 80     addr       LAB_8002b84c
-        8006ae1c 70 b8 02 80     addr       LAB_8002b870
+        8006ae10 cc a2 02 80     addr       stWaitEvent
+        8006ae14 04 6c 02 80     addr       stPlayerCollisionOn
+        8006ae18 4c b8 02 80     addr       stAnimCtrlSpdOn
+        8006ae1c 70 b8 02 80     addr       stAnimCtrlSpdOff
         8006ae20 18 a2 02 80     addr       stLetParam
         8006ae24 00 8e 02 80     addr       stTurnTowardPosX
         8006ae28 8c 85 02 80     addr       stSpecialFXOff
-        8006ae2c 1c 6f 02 80     addr       LAB_80026f1c
+        8006ae2c 1c 6f 02 80     addr       stOpenEyes
         8006ae30 64 6f 02 80     addr       stCloseEyes
-        8006ae34 b4 b7 02 80     addr       LAB_8002b7b4
-        8006ae38 d8 b7 02 80     addr       LAB_8002b7d8
-        8006ae3c 94 7e 02 80     addr       LAB_80027e94
-        8006ae40 98 ae 02 80     addr       LAB_8002ae98
-        8006ae44 ac ae 02 80     addr       LAB_8002aeac
-        8006ae48 d4 7e 02 80     addr       LAB_80027ed4
+        8006ae34 b4 b7 02 80     addr       stJumpCtrlOn
+        8006ae38 d8 b7 02 80     addr       stJumpCtrlOff
+        8006ae3c 94 7e 02 80     addr       stStomp
+        8006ae40 98 ae 02 80     addr       stPushCamera
+        8006ae44 ac ae 02 80     addr       stPullCamera
+        8006ae48 d4 7e 02 80     addr       stFloat
         8006ae4c c4 9a 02 80     addr       stSpawnChild
         8006ae50 90 ba 02 80     addr       stSetCamera
         8006ae54 84 7a 02 80     addr       stNextImm
         8006ae58 08 40 04 80     addr       stAddPickup
         8006ae5c e4 40 04 80     addr       stLosePickups
-        8006ae60 1c 29 04 80     addr       LAB_8004291c
-        8006ae64 2c 6c 02 80     addr       LAB_80026c2c
+        8006ae60 1c 29 04 80     addr       stReverse
+        8006ae64 2c 6c 02 80     addr       stPlayerCollisionOff
         8006ae68 34 6b 02 80     addr       stSetCollPoint
         8006ae6c c4 6b 02 80     addr       stSetCollPoints
-        8006ae70 5c bb 02 80     addr       LAB_8002bb5c
-        8006ae74 80 bb 02 80     addr       LAB_8002bb80
-        8006ae78 f0 bb 02 80     addr       LAB_8002bbf0
-        8006ae7c 14 bc 02 80     addr       LAB_8002bc14
+        8006ae70 5c bb 02 80     addr       stPushingOn
+        8006ae74 80 bb 02 80     addr       stPushingOff
+        8006ae78 f0 bb 02 80     addr       stPushableOn
+        8006ae7c 14 bc 02 80     addr       stPushableOff
         8006ae80 78 af 02 80     addr       stPushWaypoint
         8006ae84 b0 af 02 80     addr       stPullWaypoint
         8006ae88 f0 78 02 80     addr       stEndWhileImm
-        8006ae8c 04 b1 02 80     addr       LAB_8002b104
-        8006ae90 38 b1 02 80     addr       LAB_8002b138
+        8006ae8c 04 b1 02 80     addr       stNextWaypoint
+        8006ae90 38 b1 02 80     addr       stPrevWaypoint
         8006ae94 18 94 02 80     addr       stTurnTowardWaypointXY
         8006ae98 48 90 02 80     addr       stTurnTowardPosXY
         8006ae9c c0 ae 02 80     addr       stNearestWaypointNext
-        8006aea0 64 af 02 80     addr       LAB_8002af64
+        8006aea0 64 af 02 80     addr       stNearestWaypointPrev
         8006aea4 ec af 02 80     addr       stDeleteWaypoint
         8006aea8 a8 a0 02 80     addr       stCommandError
         8006aeac d8 82 02 80     addr       stMoveForwardAngle
@@ -156,43 +156,43 @@
         8006aed4 e4 27 04 80     addr       stAccelerateAngle
         8006aed8 b8 26 04 80     addr       stDecelerateAngle
         8006aedc ac bd 02 80     addr       stMovePosition
-        8006aee0 24 6d 02 80     addr       LAB_80026d24
+        8006aee0 24 6d 02 80     addr       stRemoveFromMap
         8006aee4 f8 41 04 80     addr       stInitCrystal
         8006aee8 c0 42 04 80     addr       stCrystal
         8006aeec 2c ac 02 80     addr       stEndLevel
-        8006aef0 44 29 04 80     addr       LAB_80042944
+        8006aef0 44 29 04 80     addr       stStopDead
         8006aef4 80 72 02 80     addr       stPitchShift
-        8006aef8 50 6c 02 80     addr       LAB_80026c50
-        8006aefc 3c bc 02 80     addr       LAB_8002bc3c
-        8006af00 60 bc 02 80     addr       LAB_8002bc60
+        8006aef8 50 6c 02 80     addr       stActivated
+        8006aefc 3c bc 02 80     addr       stHangOn
+        8006af00 60 bc 02 80     addr       stHangOff
         8006af04 24 a2 04 80     addr       stCreateDeath
-        8006af08 40 a3 04 80     addr       LAB_8004a340
-        8006af0c 3c 44 04 80     addr       LAB_8004443c
-        8006af10 e0 a7 02 80     addr       LAB_8002a7e0
-        8006af14 08 a8 02 80     addr       LAB_8002a808
-        8006af18 98 b8 02 80     addr       LAB_8002b898
-        8006af1c a8 bb 02 80     addr       LAB_8002bba8
-        8006af20 cc bb 02 80     addr       LAB_8002bbcc
-        8006af24 e8 b0 02 80     addr       LAB_8002b0e8
+        8006af08 40 a3 04 80     addr       stDoDeath
+        8006af0c 3c 44 04 80     addr       stEndCrystal
+        8006af10 e0 a7 02 80     addr       stPausePlayer
+        8006af14 08 a8 02 80     addr       stUnpausePlayer
+        8006af18 98 b8 02 80     addr       stPlayerDead
+        8006af1c a8 bb 02 80     addr       stSlideOn
+        8006af20 cc bb 02 80     addr       stSlideOff
+        8006af24 e8 b0 02 80     addr       stFirstWaypoint
         8006af28 d4 77 02 80     addr       stUntilImm
-        8006af2c c0 6c 02 80     addr       LAB_80026cc0
+        8006af2c c0 6c 02 80     addr       stCollected
         8006af30 08 b4 02 80     addr       stDec
         8006af34 a8 97 02 80     addr       stSpawnFrom
         8006af38 70 a2 02 80     addr       stLetXParam
-        8006af3c b0 44 04 80     addr       LAB_800444b0
+        8006af3c b0 44 04 80     addr       stRemoveCrystal
         8006af40 e0 44 04 80     addr       stCollectJigsaw
         8006af44 2c 80 02 80     addr       stBonus
         8006af48 0c ad 02 80     addr       stNextLevel
-        8006af4c 38 b5 02 80     addr       LAB_8002b538
-        8006af50 f8 6e 02 80     addr       LAB_80026ef8
+        8006af4c 38 b5 02 80     addr       stLookAtMe
+        8006af50 f8 6e 02 80     addr       stNoHang
         8006af54 98 b5 02 80     addr       stVibrate
-        8006af58 f8 6c 02 80     addr       LAB_80026cf8
-        8006af5c fc b9 02 80     addr       LAB_8002b9fc
-        8006af60 f0 a6 02 80     addr       LAB_8002a6f0
-        8006af64 a0 3f 04 80     addr       LAB_80043fa0
-        8006af68 78 b5 02 80     addr       LAB_8002b578
+        8006af58 f8 6c 02 80     addr       stPlayerNoStood
+        8006af5c fc b9 02 80     addr       stRemoveGobbo
+        8006af60 f0 a6 02 80     addr       stPauseTriggersNoAnim
+        8006af64 a0 3f 04 80     addr       stShowBonus
+        8006af68 78 b5 02 80     addr       stLookAtMeMap
         8006af6c fc 29 04 80     addr       stPlayerMove
-        8006af70 24 3a 04 80     addr       LAB_80043a24
+        8006af70 24 3a 04 80     addr       stPlayerTurn
         8006af74 d0 71 02 80     addr       stSetEnvelope
         8006af78 58 8a 02 80     addr       stTurnTowardPlayerX
         8006af7c 5c 8b 02 80     addr       stTurnTowardPlayerY
@@ -200,18 +200,18 @@
         8006af84 30 a8 02 80     addr       stForceDoor
         8006af88 24 45 04 80     addr       stLevelStats
         8006af8c 04 ab 02 80     addr       stReSeed
-        8006af90 c4 3f 04 80     addr       LAB_80043fc4
-        8006af94 e8 3f 04 80     addr       LAB_80043fe8
-        8006af98 5c 6d 02 80     addr       LAB_80026d5c
+        8006af90 c4 3f 04 80     addr       stShowBonusOn
+        8006af94 e8 3f 04 80     addr       stShowBonusOff
+        8006af98 5c 6d 02 80     addr       stRemoveModel
         8006af9c 64 a9 02 80     addr       stQuickPlayer
-        8006afa0 28 ba 02 80     addr       LAB_8002ba28
-        8006afa4 60 ba 02 80     addr       LAB_8002ba60
-        8006afa8 88 6c 02 80     addr       LAB_80026c88
+        8006afa0 28 ba 02 80     addr       stGobboON
+        8006afa4 60 ba 02 80     addr       stGobboOFF
+        8006afa8 88 6c 02 80     addr       stUnActivated
         8006afac bc ad 02 80     addr       stEndSubLevel
-        8006afb0 58 b5 02 80     addr       LAB_8002b558
-        8006afb4 48 6f 02 80     addr       LAB_80026f48
-        8006afb8 84 bc 02 80     addr       LAB_8002bc84
-        8006afbc 98 bc 02 80     addr       LAB_8002bc98
+        8006afb0 58 b5 02 80     addr       stTurnOffLookAtMe
+        8006afb4 48 6f 02 80     addr       stHeightFloat
+        8006afb8 84 bc 02 80     addr       stFlashOn
+        8006afbc 98 bc 02 80     addr       stFlashOff
         8006afc0 a8 a0 02 80     addr       stCommandError
         8006afc4 a8 a0 02 80     addr       stCommandError
         8006afc8 a8 a0 02 80     addr       stCommandError
@@ -254,5 +254,5 @@
         8006b05c a8 a0 02 80     addr       stCommandError
         8006b060 a8 a0 02 80     addr       stCommandError
         8006b064 a8 a0 02 80     addr       stCommandError
-        8006b068 58 26 04 80     addr       LAB_80042658
+        8006b068 58 26 04 80     addr       stTonyTest
         8006b06c 6c 26 04 80     addr       stLewisTest

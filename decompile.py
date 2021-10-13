@@ -106,6 +106,18 @@ class BinaryReadStream:
 		
 		return struct.unpack(">i", b)[0]
 	
+	def readInt16LE(self):
+		"""
+		Read and return a 16-bit little-endian integer.
+		"""
+		
+		b = self.file.read(2)
+		
+		if (len(b) != 2):
+			return None
+		
+		return struct.unpack("<h", b)[0]
+	
 	def readInt16BE(self):
 		"""
 		Read and return a 16-bit big-endian integer.
@@ -117,6 +129,30 @@ class BinaryReadStream:
 			return None
 		
 		return struct.unpack(">h", b)[0]
+	
+	def readInt8(self):
+		"""
+		Read and return a 8-bit integer.
+		"""
+		
+		b = self.file.read(1)
+		
+		if (len(b) != 1):
+			return None
+		
+		return struct.unpack("B", b)[0]
+	
+	def readInt(self, size):
+		"""
+		Read an n byte integer (1, 2 or 4 bytes).
+		"""
+		
+		if (size == 1):
+			return self.readInt8()
+		elif (size == 2):
+			return self.readInt16LE()
+		elif (size == 4):
+			return self.readInt32LE()
 	
 	def readString(self):
 		"""
@@ -257,7 +293,7 @@ def disassemble(path, output):
 	# Read in opcodes
 	while (True):
 		start = strat.getPos()
-		opcode = strat.readInt32BE()
+		opcode = strat.readInt(OP_TABLE['InstructionSize'])
 		
 		# Break on EOF or incomplete opcode
 		if (opcode == None):
@@ -281,6 +317,9 @@ def disassemble(path, output):
 						args.append(str(strat.readInt32BE()))
 					elif (type == 'int16'):
 						args.append(str(strat.readInt16BE()))
+					elif (type == 'eval'):
+						print("Warning: Eval support is not complete.")
+						args.append("[EVAL]")
 					
 					arg += 1
 			
