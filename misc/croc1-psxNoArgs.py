@@ -1,4 +1,5 @@
 {
+	'InstructionSize': 1,
 	0x00: ['CommandError'],
 	0x01: ['LoadObject'],
 	0x02: ['LoadSprite'],
