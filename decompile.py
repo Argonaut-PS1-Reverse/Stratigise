@@ -209,7 +209,7 @@ class Instruction:
 			
 			# Parse opcode arguments
 			arg = 0
-			while (arg < len(OP_TABLE[self.opcode]) - 1):
+			while (arg < len(self.arguments)):
 				# Get the type of argument
 				type = OP_TABLE[self.opcode][arg + 1]
 				
@@ -223,7 +223,7 @@ class Instruction:
 				
 				arg += 1
 			
-			string += f"    ; Location: {formathex(self.location)}"
+			string += f"\t\t\t; Location: {formathex(self.location)}"
 		
 		else:
 			string += f"; Unknown opcode: {formathex(self.opcode)}"

@@ -8,21 +8,13 @@ The format as the bytecode is (seemingly) simple. There is a strat header, then 
 
 The strat header is:
 
-| Offset       | Size     | Purpose    | Description and Notes |
-| ------------ | -------- | ---------- | --------------------- |
-| (1) `0x00`   | `0x04`   | `size`     | The size of the strat stream, minus the header size. |
-| (2) `0x04`   | `0x04`   | Unknown    | The Blue Page says its a `uint8_t *` but it also seems like it could be two `uint16_t`s? |
+| Offset       | Size     | Purpose                  | Description and Notes |
+| ------------ | -------- | ------------------------ | --------------------- |
+| (1) `0x00`   | `0x04`   | `size`                   | The size of the strat stream, minus the header size. |
+| (2) `0x04`   | `0x01`   | `audio_base_pointer`     | Pointer to start of audio data. |
+| (3) `0x05`   | `0x01`   | Unknown                  | Always seems to be zero. |
+| (4) `0x06`   | `0x02`   | Unknown                  | Offset into the file of a different type of data, though not clear what it is. |
 | =            | `0x08`   | | |
-
-### Speculation on (2)
-
-For (2) to be an in-file `uint8_t *` (offset) like the blue page says, it would have to be within the range of the first value. However, looking at the start for Croc shows that this is not the case:
-
-```
-A6 3C 00 00   04 00 C4 3A
-```
-
-The second number has to be larger than the first, regardless of endianess, so it cannot be an offset into the file. It also seems like strats always start execution from the first instruction, so it wouldn't really have an intuitive purpose even if it were. It seems that this is more likely flags for the strat.
 
 ## Bytecodes
 
@@ -37,6 +29,12 @@ Is interpreted as `SetModel lookupStratId(0)`. The `SetModel` is `3A`; the opcod
 You can find this example right at the start of `CROC.BIN`.
 
 To see a list of opcodes throughout various versions of *Croc: Legend of the Gobbos*, see [Opcodes.md](Opcodes.md).
+
+## Loading
+
+Strats are loaded in `SolveAllStrats` and `PreLoadStrats` in the PSX EU demo.
+
+Once you have function names, search for `FCRead(void *buffer, size_t size)` on PSX and for `BrFileRead(void *buffer, size_t size, int count, void *file)` on PC, then see the incoming function calls. Some will be for strat loading. (Tip: This is also a good way to see how exactly any file format loads into the game.)
 
 ## Todo
 
