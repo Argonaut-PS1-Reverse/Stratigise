@@ -1,1 +1,2 @@
 *.DIS
+__pycache__/
