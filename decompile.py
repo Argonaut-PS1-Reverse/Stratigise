@@ -6,6 +6,7 @@ Stratigise: Prototyping argounaut bytecode disassembler
 
 import struct
 import sys
+from strateval import EVAL_FUNC
 
 def printUsageAndExit():
 	print(f"Usage: {sys.argv[0]} [opcodes=OPCODEFILE] file1 file2 ...")
@@ -218,6 +219,7 @@ class Instruction:
 				if (type == 'string'):  string += self.arguments[arg]
 				elif (type == 'int32'): string += str(self.arguments[arg])
 				elif (type == 'int16'): string += str(self.arguments[arg])
+				else: string += str(self.arguments[arg])
 				
 				arg += 1
 			
@@ -318,8 +320,8 @@ def disassemble(path, output):
 					elif (type == 'int16'):
 						args.append(str(strat.readInt16BE()))
 					elif (type == 'eval'):
-						print("Warning: Eval support is not complete.")
-						args.append("[EVAL]")
+						print("Warning: Eval support is not complete!!")
+						args.append(EVAL_FUNC[OP_TABLE["EvalType"]](strat))
 					
 					arg += 1
 			

@@ -1,9 +1,14 @@
 {
+	# NOTE: This is based on the PSX list of opcodes, NOT those in Croc DE. They
+	# are still being found out and are different from those. The goal for this
+	# file right now is just to get a good idea of the arguments for each
+	# opcode.
 	'InstructionSize': 1,
+	'EvalType': 'croc1',
 	0x00: ['CommandError'],
 	0x01: ['LoadObject', 'string'],
 	0x02: ['LoadSprite'],
-	0x03: ['LoadAnim'],
+	0x03: ['LoadAnim'], # Also seems to be 0x09 in DE
 	0x04: ['LoadSample'],
 	0x05: ['LoadAnimFlag'],
 	0x06: ['TurnTowardX', 'int16', 'eval'],
@@ -58,7 +63,7 @@
 	0x37: ['LetPGVar'],
 	0x38: ['LetAVar'],
 	0x39: ['EndProc'],
-	0x3A: ['SetModel'],
+	0x3A: ['SetModel', 'eval'],
 	0x3B: ['FileEnd'],
 	0x3C: ['Blink'],
 	0x3D: ['HoldTrigger'],
@@ -67,7 +72,7 @@
 	0x40: ['TurnTowardXY'],
 	0x41: ['CommandError'],
 	0x42: ['Hold'],
-	0x43: ['Release'],
+	0x43: ['Release', 'string', ''],
 	0x44: ['Inc'],
 	0x45: ['PlayerAttackOn'],
 	0x46: ['PlayerAttackOff'],
