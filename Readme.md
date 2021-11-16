@@ -30,7 +30,7 @@ The format of opcode entries is simple:
 	opcode: [opname, argtypes ...],
 ```
 
-Where the valid argument types are `string`, `int32` and `int16` at time of writing.
+Where the valid argument types are `string`, `eval`, `int32` and `int16` at time of writing.
 
 ## To-do
 
