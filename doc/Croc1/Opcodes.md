@@ -12,11 +12,11 @@ This file compares the Croc DE and Croc PSX demo bytecodes. They seem to be most
 | `0x03` | stLoadAnim | stLoadAnim |
 | `0x04` | stLoadSample | stLoadSample |
 | `0x05` | stLoadAnimFlag | stLoadAnimFlag |
-| `0x06` | stTurnTowardX |  |
-| `0x07` | stTurnTowardY |  |
-| `0x08` | stTurnTowardWaypointX |  |
-| `0x09` | stPlaySound |  |
-| `0x0A` | stStopSound |  |
+| `0x06` | stTurnTowardX | stTurnTowardX |
+| `0x07` | stTurnTowardY | stTurnTowardY |
+| `0x08` | stTurnTowardWaypointX | stTurnTowardWaypointX |
+| `0x09` | stPlaySound | stPlaySound |
+| `0x0A` | stStopSound | stStopSound |
 | `0x0B` | stPlayAnim |  |
 | `0x0C` | stStopAnim |  |
 | `0x0D` | stWaitAnimend | stWaitAnimend |

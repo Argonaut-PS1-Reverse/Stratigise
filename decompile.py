@@ -8,7 +8,7 @@ import struct
 import sys
 
 from common import BinaryReadStream, formathex
-from strateval import EVAL_FUNC
+from strateval import EVAL_FUNC, Symbol
 
 def printUsageAndExit():
 	print(f"Usage: {sys.argv[0]} [opcodes=OPCODEFILE] file1 file2 ...")
@@ -31,6 +31,35 @@ def loadOpcodes(name = "croc1"):
 	f = open("optables/" + name + ".py", "r")
 	OP_TABLE = eval(f.read())
 	f.close()
+
+def formatArgs(arguments):
+	"""
+	Format an array of arguments as a string
+	"""
+	string = ""
+	arg = 0
+	
+	while (arg < len(arguments)):
+		string += ' '
+		
+		# format string argument
+		if (type(arguments[arg]) == str):
+			string += "\"" + arguments[arg] + "\""
+		# format array of arguments
+		elif (type(arguments[arg]) == type([])):
+			string += "{"
+			string += formatArgs(arguments[arg])
+			string += " }"
+		# format literal symbol (string without quotes)
+		elif (type(arguments[arg]) == Symbol):
+			string += arguments[arg].value
+		# format other values
+		else:
+			string += format(arguments[arg])
+		
+		arg += 1
+	
+	return string
 
 class Instruction:
 	"""
@@ -58,20 +87,7 @@ class Instruction:
 			string += str(OP_TABLE[self.opcode][0])
 			
 			# Parse opcode arguments
-			arg = 0
-			while (arg < len(self.arguments)):
-				# Get the type of argument
-				type = OP_TABLE[self.opcode][arg + 1]
-				
-				string += ' '
-				
-				# Based on the type, format the value appropraitely
-				if (type == 'string'):  string += self.arguments[arg]
-				elif (type == 'int32'): string += str(self.arguments[arg])
-				elif (type == 'int16'): string += str(self.arguments[arg])
-				else: string += format(self.arguments[arg])
-				
-				arg += 1
+			string += formatArgs(self.arguments)
 			
 			string += f"\t\t\t; Location: {formathex(self.location)}"
 		
@@ -170,9 +186,11 @@ def disassemble(path, output):
 					if (type == 'string'):
 						args.append(strat.readString())
 					elif (type == 'int32'):
-						args.append(strat.readInt32BE())
+						args.append(strat.readInt32LE())
 					elif (type == 'int16'):
-						args.append(strat.readInt16BE())
+						args.append(strat.readInt16LE())
+					elif (type == 'int8'):
+						args.append(strat.readInt8())
 					elif (type == 'eval'):
 						#print("Warning: Eval support is not complete!!")
 						args.append(EVAL_FUNC[OP_TABLE["EvalType"]](strat))

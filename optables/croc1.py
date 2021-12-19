@@ -1,20 +1,20 @@
 {
 	# NOTE: This is based on the PSX list of opcodes, NOT those in Croc DE. They
-	# are still being found out and are different from those. The goal for this
-	# file right now is just to get a good idea of the arguments for each
+	# are still being found out and might be different from those. The goal for
+	# this file right now is just to get a good idea of the arguments for each
 	# opcode.
 	'InstructionSize': 1,
 	'EvalType': 'croc1',
 	0x00: ['CommandError'],
 	0x01: ['LoadObject', 'string'],
 	0x02: ['LoadSprite'],
-	0x03: ['LoadAnim'], # Also seems to be 0x09 in DE
+	0x03: ['LoadAnim'],
 	0x04: ['LoadSample'],
 	0x05: ['LoadAnimFlag'],
 	0x06: ['TurnTowardX', 'int16', 'eval'],
 	0x07: ['TurnTowardY', 'int16', 'eval'],
 	0x08: ['TurnTowardWaypointX', 'eval'],
-	0x09: ['PlaySound', 'int16', 'eval'], # NOTE: PlaySound takes a conditional number of arguments based on the first one
+	0x09: ['PlaySound', 'int8', 'eval'], # NOTE: PlaySound takes a conditional number of arguments based on the first one
 	0x0A: ['StopSound', 'eval'],
 	0x0B: ['PlayAnim', 'eval'],
 	0x0C: ['StopAnim'],
@@ -59,11 +59,11 @@
 	0x33: ['CommandError'],
 	0x34: ['EndTrigger'],
 	0x35: ['Remove'],
-	0x36: ['LetGVar'],
-	0x37: ['LetPGVar'],
-	0x38: ['LetAVar'],
+	0x36: ['LetGVar', 'int16', 'eval'],
+	0x37: ['LetPGVar', 'int16', 'eval'],
+	0x38: ['LetAVar', 'int16', 'eval'],
 	0x39: ['EndProc'],
-	0x3A: ['SetModel', 'eval'],
+	0x3A: ['SetModel', 'eval'], # Could just take a LOT of arguments in Eval ?
 	0x3B: ['FileEnd'],
 	0x3C: ['Blink'],
 	0x3D: ['HoldTrigger'],
@@ -99,7 +99,7 @@
 	0x5B: ['TurnTowardWaypointY'],
 	0x5C: ['Hide'],
 	0x5D: ['Unhide'],
-	0x5E: ['LetXGVar'],
+	0x5E: ['LetXGVar', 'int16', 'eval'],
 	0x5F: ['SetCamHeight'],
 	0x60: ['SetLevel'],
 	0x61: ['ShadowOn'],
