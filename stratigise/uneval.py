@@ -36,28 +36,76 @@ def Croc1Eval(strat):
 		# So elif is consisent across opcodes
 		if (False): pass
 		
-		# It seems like anything under 0x11 might be getting a value of that 
-		# size.
+		# Assume that A and B are the top and second-to-top of the stack.
+		
+		# 0x01 - Get a PGVar (procedure global?)
+		elif (op == 0x01):
+			stack.append(Symbol("GetPGVar"))
+			stack.append(strat.readInt16LE())
+		
+		# 0x02 - Get strat global value
+		elif (op == 0x02):
+			stack.append(Symbol("GetGVar"))
+			stack.append(strat.readInt16LE())
+		
+		# 0x03 - Load alien var (?)
+		elif (op == 0x03):
+			stack.append(Symbol("GetAVar"))
+			pp = strat.readInt16LE()
+			stack.append(pp)
 		
 		# 0x04 - Read a long value
 		elif (op == 0x04):
 			stack.append(Symbol("ReadInt32"))
 			stack.append(strat.readInt32LE())
 		
-		# 0x05 to 0x11 - Read an opcode chars long string (???)
+		# 0x06 - Add between top values (A + B)
+		elif (op == 0x06):
+			stack.append(Symbol("Add"))
+		
+		# 0x07 - Subtract between top values (B - A)
+		elif (op == 0x07):
+			stack.append(Symbol("Subtract"))
+		
+		# 0x08 - Multiply between top values
 		elif (op == 0x08):
-			stack.append(Symbol("ReadNString"))
-			stack.append(strat.readBytes(op).decode('latin-1'))
+			stack.append(Symbol("Multiply"))
+		
+		# 0x09 - Divide between top values
+		elif (op == 0x09):
+			stack.append(Symbol("Divide"))
+		
+		# 0x0A - Bitwise AND between top values
+		elif (op == 0x0A):
+			stack.append(Symbol("BitAnd"))
+		
+		# 0x0B - Bitwise OR between top values
+		elif (op == 0x0B):
+			stack.append(Symbol("BitOr"))
 		
 		# 0x0C - Unknown but usually followed by string litral
 		elif (op == 0x0C):
-			stack.append(Symbol("String0C"))
-			stack.append(strat.readString())
+			stack.append(Symbol("CmpEqual"))
 		
 		# 0x0D - Unknown but usually followed by string literal
 		elif (op == 0x0D):
-			stack.append(Symbol("String0D"))
-			stack.append(strat.readString())
+			stack.append(Symbol("CmpNotEuqal"))
+		
+		# 0x0E - Compare A < B
+		elif (op == 0x0E):
+			stack.append(Symbol("CmpTopLess"))
+		
+		# 0x0F - Compare B < A (A > B)
+		elif (op == 0x0F):
+			stack.append(Symbol("CmpTopGreater"))
+		
+		# 0x10 - Compare A < B then XOR 1
+		elif (op == 0x10):
+			stack.append(Symbol("CmpNotTopLess"))
+		
+		# 0x11 - Compare B < A then XOR 1 ((A > B) ^ 1)
+		elif (op == 0x11):
+			stack.append(Symbol("CmpNotTopGreater"))
 		
 		# 0x12 - Pop top stack value and return
 		elif (op == 0x12):
@@ -76,16 +124,19 @@ def Croc1Eval(strat):
 				strat.readInt8() # ignore value
 				stack.append(strat.readString())
 			
-			# It seems like 0x03 and 0x05 do the same thing
-			# 0x03, 0x04, 0x05 - Long value (???)
+			# 0x03 - Load long value and then read a byte N and skip N bytes
 			elif (pp == 0x03 or pp == 0x04 or pp == 0x05):
-				stack.append(Symbol("ReadInt32"))
+				stack.append(Symbol("ReadInt32AndSkip"))
 				stack.append(strat.readInt32LE())
+				sz = strat.readInt8()
+				stack.append(strat.readBytes(sz).decode('latin-1'))
 			
 			# 0x50 - Read int32 which is then shifted left 16 (0x10)
 			elif (pp == 0x50):
 				stack.append(Symbol("ReadInt32ShiftedLeft16"))
 				stack.append(strat.readInt32LE() >> 0x10)
+				sz = strat.readInt8()
+				stack.append(strat.readBytes(sz).decode('latin-1'))
 			
 			# I did not actually check what exactly these do yet, since they
 			# both seem to do the broing "load a 32-bit" integer routine
@@ -94,11 +145,24 @@ def Croc1Eval(strat):
 				stack.append(Symbol("UnknownLongOperation1"))
 				stack.append(strat.readInt32LE())
 		
+		# 0x1E - Negate top value on the stack
+		elif (op == 0x1E):
+			stack.append(Symbol("Negate"))
+		
+		# 0x1F - Compare to zero, push 1 if is zero and 0 otherwise (A == 0)
+		elif (op == 0x1F):
+			stack.append(Symbol("CmpIsZero"))
+		
 		# 0x23 - Check if higest bit on strat anim flags is set and decrement 
 		# the stack pointer if so (seems very sepcific so not confident in this)
 		# Flag32 referes to 32nd flag, not 32-bit integer
 		elif (op == 0x23):
 			stack.append(Symbol("CheckAnimFlag32"))
+		
+		# 0x26 - Push zero and stop eval
+		elif (op == 0x26):
+			stack.append(Symbol("ReturnZero"))
+			break
 		
 		# Unknown eval opcode
 		else:

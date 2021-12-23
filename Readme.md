@@ -1,5 +1,7 @@
 # ASL Strategy Dissassembler
 
+**Important**: This project *does not* produce vaild disassemblies at time of writing.
+
 This is a proof of concept/WIP dissassembler meant to aid in understanding what strats are doing. It cannot reassemble strats at the moment and isn't meant for serious use.
 
 This is mainly meant for the Croc games' strats, but maybe it will be helpful with strats from other games, too. The only game it is known for sure not to work with is the PSX demo of Croc 1 since the instruction sizes are different between versions.
@@ -34,12 +36,18 @@ Where the valid argument types are `string`, `eval`, `int32` and `int16` at time
 
 ## To-do
 
-Aside from figuring out all of the opcodes and the file format of the strat files:
+### Documentation
 
- * Reverse engineer opcode arguments and fill in the rest of the opcode list.
- * Cleaner parsing and an actual intermediate representation (useful for adding labels and processing things in general).
+ * Reverse engineer opcode arguments and fill in the rest of the opcode list
+ * Also, stEvaluate
+ * Documenting other strat functions/the C API would be a good idea too
+
+### Disassembler
+
+ * Cleaner parsing and an actual intermediate representation
+ * Labels 
  * Re-assembling dissassembled files
- * Reimplement in C, once the bytecode format is mostly known.
+ * Reimplement in C, once the bytecode format is mostly known
 
 ## More Info
 
