@@ -16,15 +16,12 @@ could do a similar dynamic bytecode decompilation like we do for the strat
 bytecode (that is, have bytecode profiles), it would probably require the use of
 actual functions much more often. It seems a bit nicer to just deal with a table
 of functions that can be used to interpret what exactly the bytecode means.
+
+TODO: Allow for this to be loaded from external files (that is, the strat
+bytecode config files).
 """
 
-class Symbol:
-	"""
-	Eval symbol
-	"""
-	
-	def __init__(self, value):
-		self.value = value
+from stratigise.common import Symbol
 
 def Croc1Eval(strat):
 	"""
@@ -114,7 +111,7 @@ def Unknown(strat):
 	Handler for unknown bytecodes
 	"""
 	
-	return "[eval]"
+	return [Symbol("Eval code - strat decompiler output is now broken")]
 
 """
 Table of eval functions

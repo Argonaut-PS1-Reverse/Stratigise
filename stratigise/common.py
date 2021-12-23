@@ -1,5 +1,5 @@
 """
-Common utilities for the project.
+Common utilities for the stratigise project.
 """
 
 import struct
@@ -146,7 +146,16 @@ class BinaryReadStream:
 		
 		return string
 
-def formathex(n):
+class Symbol:
+	"""
+	Eval symbol: the job of this class is only to contain a string that will be 
+	added without quotes to the output.
+	"""
+	
+	def __init__(self, value):
+		self.value = value
+
+def formatHex(n):
 	"""
 	Format 32-bit integer as hexidecimal
 	"""
