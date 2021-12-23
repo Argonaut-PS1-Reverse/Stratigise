@@ -4,7 +4,7 @@
 
 This is a proof of concept/WIP dissassembler meant to aid in understanding what strats are doing. It cannot reassemble strats at the moment and isn't meant for serious use.
 
-This is mainly meant for the Croc games' strats, but maybe it will be helpful with strats from other games, too. The only game it is known for sure not to work with is the PSX demo of Croc 1 since the instruction sizes are different between versions.
+This is mainly meant for *Croc: Legend of the Gobbos* and *Croc 2*, but it may be helpful with strats from other games, too.
 
 ## Usage
 
@@ -22,19 +22,7 @@ Advnaced usage:
 decompile.py optable=OPTABLE1 file1 file2 ... optable=OPTABLE2 file3 file4 ...
 ```
 
-## Adding Opcodes
-
-You can add opcodes in the `opcodes.py` file, which is just a dictionary of opcodes. The opcodes are in big endian for convinence purposes, so they look the same as they do in the file. This could change in the future, but for now it works.
-
-The format of opcode entries is simple:
-
-```py
-	opcode: [opname, argtypes ...],
-```
-
-Where the valid argument types are `string`, `eval`, `int32` and `int16` at time of writing.
-
-## To-do
+## Todo
 
 ### Documentation
 
@@ -51,4 +39,6 @@ Where the valid argument types are `string`, `eval`, `int32` and `int16` at time
 
 ## More Info
 
-Make sure to read things in the `doc` folder if you want to know more. You can also read more info about strats on [my modding notes](https://gist.github.com/knot126/bb80efbc838972e8e477ed7eaabdb221#stratigies-script-information), which also links to other helpful resources when possible.
+Make sure to read things in the `doc` folder if you want to know more.
+
+You can also read more info about strats on [my modding notes](https://gist.github.com/knot126/bb80efbc838972e8e477ed7eaabdb221#stratigies-script-information), which also links to other resources.
