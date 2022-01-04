@@ -34,26 +34,22 @@ def main(params):
 	
 	i = 0
 	while (i < len(params)):
+		# Set current strat spec
 		if (params[i] == "--spec"):
-			spec = params[i + 1]
-			i += 1
+			if (len(params) > (i + 1)):
+				spec = params[i + 1]
+				i += 1
+			else:
+				print("Warning: Strat Spec was specified without a game name.")
+		
+		# Process file
 		else:
+			path = params[i]
+			print(f"Processing \"{path}\" with spec \"{spec}\" ⋅⋅⋅")
 			dis.loadSpec(spec)
-			dis.disassemble(params[i], params[i] + ".DIS")
+			dis.disassemble(path, path + ".DIS")
 		
 		i += 1
-	
-	
-	
-	#for cmd in params:
-		#cmd = cmd.split('=')
-		
-		#if (cmd[0] == 'opcodes'):
-			#print(f"Loading opcodes for {cmd[1]} ⋅⋅⋅")
-			#dis.loadSpec(cmd[1])
-		#else:
-			#print(f"Processing \"{cmd[0]}\" ⋅⋅⋅")
-			#dis.disassemble(cmd[0], cmd[0] + ".DIS")
 
 if (__name__ == "__main__"):
 	main(sys.argv[1:])
