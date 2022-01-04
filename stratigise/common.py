@@ -4,6 +4,7 @@ Common utilities for the stratigise project.
 
 import struct
 import sys
+import importlib.util as imut
 
 class BinaryReadStream:
 	"""
@@ -80,6 +81,30 @@ class BinaryReadStream:
 		
 		return struct.unpack(">i", b)[0]
 	
+	def readInt24LE(self):
+		"""
+		Read and return a 24-bit little-endian integer.
+		"""
+		
+		b = self.file.read(3)
+		
+		if (len(b) != 3):
+			return None
+		
+		return struct.unpack("<i", b + b"\x00")[0]
+	
+	def readInt24BE(self):
+		"""
+		Read and return a 24-bit big-endian integer.
+		"""
+		
+		b = self.file.read(3)
+		
+		if (len(b) != 3):
+			return None
+		
+		return struct.unpack(">i", b"\x00" + b)[0]
+	
 	def readInt16LE(self):
 		"""
 		Read and return a 16-bit little-endian integer.
@@ -118,13 +143,15 @@ class BinaryReadStream:
 	
 	def readInt(self, size):
 		"""
-		Read an n byte integer (1, 2 or 4 bytes).
+		Read an n byte integer (four or less bytes only).
 		"""
 		
 		if (size == 1):
 			return self.readInt8()
 		elif (size == 2):
 			return self.readInt16LE()
+		elif (size == 3):
+			return self.readInt24LE()
 		elif (size == 4):
 			return self.readInt32LE()
 	
@@ -172,3 +199,14 @@ def formatHexOfSize(size, number):
 	# Account for twos compliment and format behaviour
 	number = number if (number >= 0) else (-number) + (1 << ((size * 8) - 1))
 	return ("0x{:" + str(size) + "X}").format(number)
+
+def loadModule(path):
+	"""
+	Load a module from a file path
+	"""
+	
+	spec = imut.spec_from_file_location("opcodes", path)
+	module = imut.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	
+	return module

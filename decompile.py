@@ -23,16 +23,16 @@ def main(params):
 	if (len(params) == 0 or params[0] == "--help" or params[0] == "-h"):
 		printUsageAndExit()
 	
-	dis.loadOpcodes()
+	params.insert(0, "opcodes=croc1")
 	
 	for cmd in params:
 		cmd = cmd.split('=')
 		
 		if (cmd[0] == 'opcodes'):
-			print(f"Loading opcodes for {cmd[0]}...")
-			dis.loadOpcodes(cmd[1])
+			print(f"Loading opcodes for {cmd[1]} ⋅⋅⋅")
+			dis.loadSpec(cmd[1])
 		else:
-			print(f"Processing {cmd[0]}...")
+			print(f"Processing \"{cmd[0]}\" ⋅⋅⋅")
 			dis.disassemble(cmd[0], cmd[0] + ".DIS")
 
 if (__name__ == "__main__"):

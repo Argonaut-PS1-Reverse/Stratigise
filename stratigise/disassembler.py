@@ -2,22 +2,19 @@
 Partially generic argonaut bytecode dissassemlber
 """
 
-from stratigise.common import BinaryReadStream, Symbol, formatHex
-from stratigise.uneval import EVAL_FUNC
+from stratigise.common import BinaryReadStream, Symbol, formatHex, loadModule
 
 # Opcode table
-OP_TABLE = None
+gSpec = None
 
-def loadOpcodes(name = "croc1"):
+def loadSpec(name = "croc1"):
 	"""
-	Load a set of opcodes
+	Load a spec for a game format
 	"""
 	
-	global OP_TABLE
+	global gSpec
 	
-	f = open("optables/" + name + ".py", "r")
-	OP_TABLE = eval(f.read())
-	f.close()
+	gSpec = loadModule("optables/" + name + ".py")
 
 def formatOperationArgs(arguments):
 	"""
@@ -70,9 +67,9 @@ class Instruction:
 		
 		string = ""
 		
-		if (self.opcode in OP_TABLE):
+		if (self.opcode in gSpec.opcodes):
 			# Write opcode name
-			string += str(OP_TABLE[self.opcode][0])
+			string += str(gSpec.opcodes[self.opcode][0])
 			
 			# Parse opcode arguments
 			string += formatOperationArgs(self.arguments)
@@ -153,7 +150,7 @@ def disassemble(path, output):
 	# Read in opcodes
 	while (True):
 		start = strat.getPos()
-		opcode = strat.readInt(OP_TABLE['InstructionSize'])
+		opcode = strat.readInt(gSpec.instructionSize)
 		
 		# Break on EOF or incomplete opcode
 		if (opcode == None):
@@ -164,9 +161,9 @@ def disassemble(path, output):
 			args = []
 			
 			# Parse opcode arguments
-			if (opcode in OP_TABLE):
-				for arg in range(1, len(OP_TABLE[opcode])):
-					type = OP_TABLE[opcode][arg]
+			if (opcode in gSpec.opcodes):
+				for arg in range(1, len(gSpec.opcodes[opcode])):
+					type = gSpec.opcodes[opcode][arg]
 					
 					# Based on the type, get the next value from the instruction stream appropraitely
 					if (type == 'string'):
@@ -178,7 +175,7 @@ def disassemble(path, output):
 					elif (type == 'int8'):
 						args.append(strat.readInt8())
 					elif (type == 'eval'):
-						args.append(EVAL_FUNC[OP_TABLE["EvalType"]](strat))
+						args.append(gSpec.unevalute(strat))
 					else:
 						pass
 			
