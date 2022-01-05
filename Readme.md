@@ -19,7 +19,7 @@ It will output a file with the original name plus the `.DIS` extension.
 Advnaced usage:
 
 ```
-decompile.py optable=OPTABLE1 file1 file2 ... optable=OPTABLE2 file3 file4 ...
+decompile.py --spec gamename1 file1 file2 ... --spec gamename2 file1 file2 ...
 ```
 
 ## Todo
