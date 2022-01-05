@@ -14,7 +14,7 @@ def loadSpec(name = "croc1"):
 	
 	global gSpec
 	
-	gSpec = loadModule("optables/" + name + ".py")
+	gSpec = loadModule("specs/" + name + ".py")
 
 def formatOperationArgs(arguments):
 	"""
