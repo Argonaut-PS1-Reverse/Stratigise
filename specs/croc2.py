@@ -14,4 +14,4 @@ opcodes = {
 
 # Not needed for Croc 2 ?
 def unevaluate(strat):
-	pass
+	print("Warning: Unevaluate called on Croc 2 strat!")
