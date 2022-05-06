@@ -1,3 +1,13 @@
+**Update 2022-05-06**
+
+The source code for Croc: Legend of the Gobbos *could* (not *will*) be released soon, coming after BRender's open-sourcing on 3 May 2022, which contains the full strat interpreter (and presumably build toolchain) for Croc 1! If so, the disassembler will stop development (since it would be pointless) and I will look more at documenting the strat code, if it's not already been done well.
+
+For more info and probably an annoucement if or when it is available, check [Croc discord](https://discord.gg/JtrPB3F).
+
+Probable links to source code for [Definitive Edition](https://croc.epiclper.com) once available: [BRender (DE)](https://github.com/crocguy0688/CrocDE-BRender) | [Game code (DE)](https://github.com/crocguy0688/Croc) | [Data (DE)](https://github.com/crocguy0688/CrocData)
+
+[Screenshot of first lines of stEvaluate](https://cdn.discordapp.com/attachments/347524018334859265/971494443968503878/unknown.png)
+
 # ASL Strategy Dissassembler
 
 **Important**: This project *does not* produce vaild disassemblies at time of writing.
