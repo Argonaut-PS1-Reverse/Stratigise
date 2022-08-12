@@ -42,14 +42,14 @@ opcodes = {
 	0x12: ['Until', 'eval'],
 	0x13: ['While', 'eval', 'int16'],
 	0x14: ['EndWhile'],
-	0x15: ['If', 'eval', 'int16'],
-	0x16: ['Else', 'int16'],
+	0x15: ['If', 'eval', 'offset16'],
+	0x16: ['Else', 'offset16'],
 	0x17: ['IfAnimend', 'int16'],
 	0x18: ['For', 'int16', 'eval', 'eval'],
 	0x19: ['Next'],
 	0x1A: ['Switch', 'eval', 'int16', 'int16'], # Warning: Variable arguments, cannot yet properly disassemble
 	0x1B: ['EndCase', 'int16'],
-	0x1C: ['ProcCall', 'int16'],
+	0x1C: ['ProcCall', 'address16'],
 	0x1D: ['ResetPosition'],
 	0x1E: ['Goto', 'int16'],
 	0x1F: ['ScaleX', 'eval'],
@@ -63,8 +63,8 @@ opcodes = {
 	0x27: ['MoveDown', 'eval'],
 	0x28: ['MoveLeft', 'eval'],
 	0x29: ['MoveUp', 'eval'],
-	0x2A: ['TurnRight'],
-	0x2B: ['TurnLeft'],
+	0x2A: ['TurnRight', 'eval'],
+	0x2B: ['TurnLeft', 'eval'],
 	0x2C: ['TiltBackward', 'eval'],
 	0x2D: ['TiltForward', 'eval'],
 	0x2E: ['TiltRight', 'eval'],
@@ -284,7 +284,7 @@ def unevalute(strat):
 	Croc 1 eval type handling
 	"""
 	
-	stack = []
+	operations = []
 	
 	while (True):
 		op = strat.readInt8()
@@ -296,133 +296,183 @@ def unevalute(strat):
 		
 		# 0x01 - Get a PGVar (procedure global?)
 		elif (op == 0x01):
-			stack.append(Symbol("GetPGVar"))
-			stack.append(strat.readInt16LE())
+			operations.append(Symbol("GetPGVar"))
+			operations.append(strat.readInt16LE())
 		
 		# 0x02 - Get strat global value
 		elif (op == 0x02):
-			stack.append(Symbol("GetGVar"))
-			stack.append(strat.readInt16LE())
+			operations.append(Symbol("GetGVar"))
+			operations.append(strat.readInt16LE())
 		
 		# 0x03 - Load alien var (?)
 		elif (op == 0x03):
-			stack.append(Symbol("GetAVar"))
+			operations.append(Symbol("GetAVar"))
 			pp = strat.readInt16LE()
-			stack.append(pp)
+			operations.append(pp)
 		
 		# 0x04 - Read a long value
 		elif (op == 0x04):
-			stack.append(Symbol("ReadInt32"))
-			stack.append(strat.readInt32LE())
+			operations.append(Symbol("PushInt32"))
+			operations.append(strat.readInt32LE())
 		
 		# 0x06 - Add between top values (A + B)
 		elif (op == 0x06):
-			stack.append(Symbol("Add"))
+			operations.append(Symbol("Add"))
 		
 		# 0x07 - Subtract between top values (B - A)
 		elif (op == 0x07):
-			stack.append(Symbol("Subtract"))
+			operations.append(Symbol("Subtract"))
 		
 		# 0x08 - Multiply between top values
 		elif (op == 0x08):
-			stack.append(Symbol("Multiply"))
+			operations.append(Symbol("Multiply"))
 		
 		# 0x09 - Divide between top values
 		elif (op == 0x09):
-			stack.append(Symbol("Divide"))
+			operations.append(Symbol("Divide"))
 		
 		# 0x0A - Bitwise AND between top values
 		elif (op == 0x0A):
-			stack.append(Symbol("BitAnd"))
+			operations.append(Symbol("BitAnd"))
 		
 		# 0x0B - Bitwise OR between top values
 		elif (op == 0x0B):
-			stack.append(Symbol("BitOr"))
+			operations.append(Symbol("BitOr"))
 		
 		# 0x0C - Unknown but usually followed by string litral
 		elif (op == 0x0C):
-			stack.append(Symbol("CmpEqual"))
+			operations.append(Symbol("CmpEqual"))
 		
 		# 0x0D - Unknown but usually followed by string literal
 		elif (op == 0x0D):
-			stack.append(Symbol("CmpNotEuqal"))
+			operations.append(Symbol("CmpNotEuqal"))
 		
 		# 0x0E - Compare A < B
 		elif (op == 0x0E):
-			stack.append(Symbol("CmpTopLess"))
+			operations.append(Symbol("CmpTopLess"))
 		
 		# 0x0F - Compare B < A (A > B)
 		elif (op == 0x0F):
-			stack.append(Symbol("CmpTopGreater"))
+			operations.append(Symbol("CmpTopGreater"))
 		
 		# 0x10 - Compare A < B then XOR 1
 		elif (op == 0x10):
-			stack.append(Symbol("CmpNotTopLess"))
+			operations.append(Symbol("CmpNotTopLess"))
 		
 		# 0x11 - Compare B < A then XOR 1 ((A > B) ^ 1)
 		elif (op == 0x11):
-			stack.append(Symbol("CmpNotTopGreater"))
+			operations.append(Symbol("CmpNotTopGreater"))
 		
 		# 0x12 - Pop top stack value and return
 		elif (op == 0x12):
-			stack.append(Symbol("ReturnTop"))
+			operations.append(Symbol("ReturnTop"))
 			break
 		
 		# 0x13 - Load 32-bit constants with advanced operations
 		elif (op == 0x13):
-			stack.append(Symbol("LongOperation"))
+			operations.append(Symbol("LongOperation"))
 			pp = strat.readInt8()
 			
 			# 0x01 - Long value with lookup
 			if (pp == 0x01):
-				stack.append(Symbol("SearchForWadEntry"))
-				stack.append(strat.readInt32LE())
+				operations.append(Symbol("SearchForWadEntry"))
+				operations.append(strat.readInt32LE())
 				strat.readInt8() # ignore value
-				stack.append(strat.readString())
+				operations.append(strat.readString())
 			
 			# 0x03 - Load long value and then read a byte N and skip N bytes
 			elif (pp == 0x03 or pp == 0x04 or pp == 0x05):
-				stack.append(Symbol("ReadInt32AndSkip"))
-				stack.append(strat.readInt32LE())
+				operations.append(Symbol("ReadInt32AndSkip"))
+				operations.append(strat.readInt32LE())
 				sz = strat.readInt8()
-				stack.append(strat.readBytes(sz).decode('latin-1'))
+				operations.append(strat.readBytes(sz).decode('latin-1'))
 			
 			# 0x50 - Read int32 which is then shifted left 16 (0x10)
 			elif (pp == 0x50):
-				stack.append(Symbol("ReadInt32ShiftedLeft16"))
-				stack.append(strat.readInt32LE() >> 0x10)
+				operations.append(Symbol("ReadInt32ShiftedLeft16"))
+				operations.append(strat.readInt32LE() >> 0x10)
 				sz = strat.readInt8()
-				stack.append(strat.readBytes(sz).decode('latin-1'))
+				operations.append(strat.readBytes(sz).decode('latin-1'))
 			
 			# I did not actually check what exactly these do yet, since they
 			# both seem to do the broing "load a 32-bit" integer routine
 			# like most things here seem to do...
 			elif (pp == 0x51 or pp == 0x8E):
-				stack.append(Symbol("UnknownLongOperation1"))
-				stack.append(strat.readInt32LE())
+				operations.append(Symbol("UnknownLongOperation1"))
+				operations.append(strat.readInt32LE())
+		
+		# NOTE: Assume the following math functions replace the top of the stack
+		# with their resulting value unless otherwise noted.
+		
+		# 0x14 - Sine(top value on the stack << 16)
+		elif (op == 0x14):
+			operations.append(Symbol("Sine"))
+		
+		# 0x15 - Cosine(top value on the stack << 16)
+		elif (op == 0x15):
+			operations.append(Symbol("Cosine"))
+		
+		# 0x17 - Square root of the top stack value
+		elif (op == 0x17):
+			operations.append(Symbol("SquareRoot"))
+		
+		# 0x18 - Absolute value of the top stack value
+		elif (op == 0x18):
+			operations.append(Symbol("AbsoluteValue"))
+		
+		# 0x19 - (Random number) % top of stack
+		elif (op == 0x19):
+			operations.append(Symbol("RandomNumber"))
+		
+		# 0x1A - Floor the top of the stack (for fixed point numbers)
+		elif (op == 0x1A):
+			operations.append(Symbol("FloorNumber"))
+		
+		# 0x1B - Check if the player is within the given radius (disregarding height) at the top of the stack
+		elif (op == 0x1B):
+			operations.append(Symbol("PlayerIsWithinRadius2D"))
+		
+		# 0x1C - Push extern global to the stack
+		elif (op == 0x1C):
+			operations.append(Symbol("PushExternGlobal"))
+			operations.append(strat.readInt16LE())
+		
+		# 0x1D - Load value from (instructionPointer + offset + 0x154)
+		elif (op == 0x1D):
+			operations.append(Symbol("PushValueFromIPAndOffset154"))
+			operations.append(strat.readInt16LE())
 		
 		# 0x1E - Negate top value on the stack
 		elif (op == 0x1E):
-			stack.append(Symbol("Negate"))
+			operations.append(Symbol("Negate"))
 		
 		# 0x1F - Compare to zero, push 1 if is zero and 0 otherwise (A == 0)
 		elif (op == 0x1F):
-			stack.append(Symbol("CmpIsZero"))
+			operations.append(Symbol("CmpIsZero"))
 		
 		# 0x23 - Check if higest bit on strat anim flags is set and decrement 
 		# the stack pointer if so (seems very sepcific so not confident in this)
 		# Flag32 referes to 32nd flag, not 32-bit integer
 		elif (op == 0x23):
-			stack.append(Symbol("CheckAnimFlag32"))
+			operations.append(Symbol("CheckAnimFlag32"))
 		
 		# 0x26 - Push zero and stop eval
 		elif (op == 0x26):
-			stack.append(Symbol("ReturnZero"))
+			operations.append(Symbol("ReturnZero"))
 			break
 		
 		# Unknown eval opcode
 		else:
+			operations.append(Symbol("__unknown_operation_" + hex(op)))
 			break
 	
-	return stack
+	return operations
 
+def after(opcode):
+	if (opcode == 0x39):
+		return "\n\n; -------------------------------------------------------------------\n "
+	
+	elif (opcode == 0x1a or opcode == 0x30 or opcode == 0x31 or opcode == 0x3c):
+		return "; BROKEN!!!"
+	
+	return ""

@@ -16,6 +16,13 @@ def loadSpec(name = "croc1"):
 	
 	gSpec = loadModule("specs/" + name + ".py")
 
+def getLabelString(addr):
+	"""
+	Get the string for a label
+	"""
+	
+	return "Label_" + hex(addr)[2:]
+
 def formatOperationArgs(arguments):
 	"""
 	Format an array of operation arguments as a string
@@ -74,10 +81,12 @@ class Instruction:
 			# Parse opcode arguments
 			string += formatOperationArgs(self.arguments)
 			
-			string += f"\t\t\t; Location: {formatHex(self.location)}"
+			# Call spec post function
+			if (hasattr(gSpec, "after")):
+				string += gSpec.after(self.opcode)
 		
 		else:
-			string += f"; Unknown opcode: {formatHex(self.opcode)}"
+			string += f"; !!! Unknown opcode: {hex(self.opcode)} !!!"
 		
 		return string
 
@@ -93,6 +102,7 @@ class StratInstructionList:
 		
 		self.preamble = "" if type(preamble) != str else preamble
 		self.stream = []
+		self.labels = []
 	
 	def setPreamble(self, preamble):
 		"""
@@ -107,6 +117,13 @@ class StratInstructionList:
 		"""
 		
 		self.stream.append(instruction)
+	
+	def addLabel(self, addr):
+		"""
+		Add a label to be marked in the output
+		"""
+		
+		self.labels.append(addr)
 	
 	def writePrint(self):
 		"""
@@ -128,7 +145,10 @@ class StratInstructionList:
 		f.write(self.preamble)
 		
 		for s in self.stream:
-			f.write(s.getString() + "\n")
+			if (s.location in self.labels):
+				f.write("\n" + getLabelString(s.location) + ":\n")
+			
+			f.write("\t" + s.getString() + "\n")
 		
 		f.close()
 
@@ -145,7 +165,7 @@ def disassemble(path, output):
 	secondint = strat.readInt32BE()
 	
 	# Set starting comment
-	instructions.setPreamble(f"; Strat was {size} bytes long.\n; Second bytes were {formatHex(secondint)}\n")
+	instructions.setPreamble(f"; Strat was {size} bytes long.\n; Second bytes were {formatHex(secondint)}\n\n")
 	
 	# Read in opcodes
 	while (True):
@@ -172,6 +192,14 @@ def disassemble(path, output):
 						args.append(strat.readInt32LE())
 					elif (type == 'int16'):
 						args.append(strat.readInt16LE())
+					elif (type == 'offset16'):
+						address = strat.readInt16LE() + strat.getPos()
+						instructions.addLabel(address)
+						args.append(Symbol(getLabelString(address)))
+					elif (type == 'address16'):
+						address = strat.readInt16LE()
+						instructions.addLabel(address)
+						args.append(Symbol(getLabelString(address)))
 					elif (type == 'int8'):
 						args.append(strat.readInt8())
 					elif (type == 'eval'):
