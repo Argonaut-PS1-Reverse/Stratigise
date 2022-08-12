@@ -210,3 +210,13 @@ def loadModule(path):
 	spec.loader.exec_module(module)
 	
 	return module
+
+def getLabelString(addr):
+	"""
+	Get the string for a label
+	"""
+	
+	if (addr == None):
+		return "ERRLABEL"
+	
+	return "Label_" + hex(addr)[2:]

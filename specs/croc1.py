@@ -3,7 +3,7 @@ Croc 1 strat spec - opcodes and unevalute
 """
 
 # Needed to create symbols in unevaluate
-from stratigise.common import Symbol
+from stratigise.common import Symbol, getLabelString
 
 """
 Set the width of the instruction opcode - for Croc 1 is is one byte.
@@ -30,7 +30,7 @@ opcodes = {
 	0x06: ['TurnTowardX', 'int16', 'eval'],
 	0x07: ['TurnTowardY', 'int16', 'eval'],
 	0x08: ['TurnTowardWaypointX', 'eval'],
-	0x09: ['PlaySound', 'int8', 'eval'], # Warning: PlaySound takes a conditional number of arguments based on the first one, it cannot yet be disassembled
+	0x09: ['PlaySound', 'int8', 'eval', 'varargs'],
 	0x0A: ['StopSound', 'eval'],
 	0x0B: ['PlayAnim', 'eval'],
 	0x0C: ['StopAnim'],
@@ -47,8 +47,8 @@ opcodes = {
 	0x17: ['IfAnimend', 'int16'],
 	0x18: ['For', 'int16', 'eval', 'eval'],
 	0x19: ['Next'],
-	0x1A: ['Switch', 'eval', 'int16', 'int16'], # Warning: Variable arguments, cannot yet properly disassemble
-	0x1B: ['EndCase', 'int16'],
+	0x1A: ['Switch', 'eval', 'int16', 'address16', 'varargs'],
+	0x1B: ['EndCase', 'address16'],
 	0x1C: ['ProcCall', 'address16'],
 	0x1D: ['ResetPosition'],
 	0x1E: ['Goto', 'int16'],
@@ -69,7 +69,7 @@ opcodes = {
 	0x2D: ['TiltForward', 'eval'],
 	0x2E: ['TiltRight', 'eval'],
 	0x2F: ['TiltLeft', 'eval'],
-	0x30: ['Spawn', 'int32', 'int16'], # Warning: Variable arguments, cannot yet properly disassemble
+	0x30: ['Spawn', 'int32', 'int16', 'int8', 'int8', 'int8', 'varargs'], # Warning: Variable arguments, cannot yet properly disassemble
 	0x31: ['CreateTrigger', 'int16'], # Warning: Requires contional number of arguments, cannot yet properly disassemble
 	0x32: ['KillTrigger', 'int16'], # hcf
 	0x33: ['CommandError'],
@@ -129,7 +129,7 @@ opcodes = {
 	0x69: ['PlayerCollisionOn'],
 	0x6A: ['AnimCtrlSpdOn'],
 	0x6B: ['AnimCtrlSpdOff'],
-	0x6C: ['LetParam'],
+	0x6C: ['LetParam', 'int16', 'eval'],
 	0x6D: ['TurnTowardPosX', 'eval'],
 	0x6E: ['SpecialFXOff', 'eval'],
 	0x6F: ['OpenEyes'],
@@ -279,7 +279,7 @@ opcodes = {
 	0xFF: ['LewisTest', 'int8', 'eval'],
 }
 
-def unevalute(strat):
+def unevaluate(strat):
 	"""
 	Croc 1 eval type handling
 	"""
@@ -289,8 +289,8 @@ def unevalute(strat):
 	while (True):
 		op = strat.readInt8()
 		
-		# So elif is consisent across opcodes
-		if (False): pass
+		# Break on none
+		if (op == None): break
 		
 		# Assume that A and B are the top and second-to-top of the stack.
 		
@@ -468,11 +468,56 @@ def unevalute(strat):
 	
 	return operations
 
-def after(opcode):
-	if (opcode == 0x39):
+def varargs(strat, op, args, instructions):
+	"""
+	Variable arguments handling
+	"""
+	
+	# Play sound
+	if (op == 0x09):
+		mode = args[0]
+		
+		if (mode == 2):
+			args.append(unevaluate(strat))
+		
+		elif (mode == 4):
+			args.append(unevaluate(strat))
+			args.append(unevaluate(strat))
+			args.append(unevaluate(strat))
+	
+	# Switch statement
+	elif (op == 0x1A):
+		for i in range(args[1]):
+			# Get the label
+			address = (strat.readInt16LE() or 1) + 0x4
+			instructions.addLabel(address)
+			args.append(Symbol(getLabelString(address)))
+			
+			# Evaluate expression
+			args.append(unevaluate(strat))
+	
+	# Spawn
+	elif (op == 0x30):
+		# Read string
+		args.append(strat.readBytes(strat.readInt8()).decode('latin-1'))
+		
+		# something else should go here probably
+		
+		# Read evals
+		for i in range(args[4] - 1):
+			args.append(unevaluate(strat))
+	
+	return []
+
+def after(op):
+	"""
+	String to append after the opcode output
+	"""
+	
+	if (op == 0x39):
 		return "\n\n; -------------------------------------------------------------------\n "
 	
-	elif (opcode == 0x1a or opcode == 0x30 or opcode == 0x31 or opcode == 0x3c):
+	elif (op == 0x31 or op == 0x3c):
 		return "; BROKEN!!!"
 	
 	return ""

@@ -2,7 +2,7 @@
 Partially generic argonaut bytecode dissassemlber
 """
 
-from stratigise.common import BinaryReadStream, Symbol, formatHex, loadModule
+from stratigise.common import BinaryReadStream, Symbol, formatHex, loadModule, getLabelString
 
 # Opcode table
 gSpec = None
@@ -15,13 +15,6 @@ def loadSpec(name = "croc1"):
 	global gSpec
 	
 	gSpec = loadModule("specs/" + name + ".py")
-
-def getLabelString(addr):
-	"""
-	Get the string for a label
-	"""
-	
-	return "Label_" + hex(addr)[2:]
 
 def formatOperationArgs(arguments):
 	"""
@@ -197,13 +190,15 @@ def disassemble(path, output):
 						instructions.addLabel(address)
 						args.append(Symbol(getLabelString(address)))
 					elif (type == 'address16'):
-						address = strat.readInt16LE()
+						address = (strat.readInt16LE() or 1) + 0x4
 						instructions.addLabel(address)
 						args.append(Symbol(getLabelString(address)))
 					elif (type == 'int8'):
 						args.append(strat.readInt8())
 					elif (type == 'eval'):
-						args.append(gSpec.unevalute(strat))
+						args.append(gSpec.unevaluate(strat))
+					elif (type == 'varargs'):
+						args.append(gSpec.varargs(strat, opcode, args, instructions))
 					else:
 						pass
 			
