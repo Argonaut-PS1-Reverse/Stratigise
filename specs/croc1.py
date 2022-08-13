@@ -450,6 +450,19 @@ def unevaluate(strat):
 		elif (op == 0x1F):
 			operations.append(Symbol("CmpIsZero"))
 		
+		# 0x20 - Pop the first two stack values, check are not zero and place
+		# result in second down stack value
+		elif (op == 0x20):
+			operations.append(Symbol("TopPairNotZero"))
+		
+		# 0x21 - Check if the strat's velocity is under the value on top of stack (unsure)
+		elif (op == 0x21):
+			operations.append(Symbol("VelocityLessThan"))
+		
+		# 0x22 - Pop top three values as point and push distance to that point
+		elif (op == 0x22):
+			operations.append(Symbol("DistanceFromPoint"))
+		
 		# 0x23 - Check if higest bit on strat anim flags is set and decrement 
 		# the stack pointer if so (seems very sepcific so not confident in this)
 		# Flag32 referes to 32nd flag, not 32-bit integer
