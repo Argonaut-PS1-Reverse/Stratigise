@@ -69,8 +69,8 @@ opcodes = {
 	0x2D: ['TiltForward', 'eval'],
 	0x2E: ['TiltRight', 'eval'],
 	0x2F: ['TiltLeft', 'eval'],
-	0x30: ['Spawn', 'int32', 'int16', 'int8', 'int8', 'int8', 'varargs'], # Warning: Variable arguments, cannot yet properly disassemble
-	0x31: ['CreateTrigger', 'int16'], # Warning: Requires contional number of arguments, cannot yet properly disassemble
+	0x30: ['Spawn', 'int32', 'int16', 'int8', 'int8', 'int8', 'varargs'],
+	0x31: ['CreateTrigger', 'int8', 'varargs', 'int16'],
 	0x32: ['KillTrigger', 'int16'], # hcf
 	0x33: ['CommandError'],
 	0x34: ['EndTrigger'],
@@ -518,6 +518,15 @@ def varargs(strat, op, args, instructions):
 		
 		# Read evals
 		for i in range(args[4] - 1):
+			args.append(unevaluate(strat))
+	
+	# Create trigger
+	elif (op == 0x31):
+		mode = args[0]
+		
+		if (mode in [0x1, 0x8, 0x9, 0xB]):
+			args.append(strat.readInt16LE())
+		else:
 			args.append(unevaluate(strat))
 	
 	return []
