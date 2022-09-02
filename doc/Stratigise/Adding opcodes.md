@@ -8,6 +8,17 @@ The format of opcode entries is simple:
 	opcode: [opname, argtypes ...],
 ```
 
-Where the valid argument types are `string`, `eval`, `int32`, `int16` and `int8` at time of writing.
+## Argument types
 
-In the future, an `addr` type may be used to indicate that a type is an address in the strat.
+Where the valid argument types are:
+
+| Type | Size | Purpose |
+| ---- | ---- | ------- |
+| `string`| Until `NUL` byte | `NUL`-terminated string |
+| `eval` | Variable | Used to decode stEvaluate immediate values (Croc 1 only) |
+| `varargs` | Variable | Used to decode a variable number of args (Croc 1 only) |
+| `offset16` | `0x2` | Relative address |
+| `address16` | `0x2` | Literal/absolute address (adds `0x4` to value) |
+| `int32` | `0x4` | Little-endian 32-bit integer |
+| `int16` | `0x2` | Little-endian 16-bit integer |
+| `int8` | `0x1` | 8-bit integer |
