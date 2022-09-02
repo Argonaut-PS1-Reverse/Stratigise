@@ -81,15 +81,15 @@ opcodes = {
 	0x39: ['EndProc'],
 	0x3A: ['SetModel', 'eval'],
 	0x3B: ['FileEnd'], # hcf
-	0x3C: ['Blink', 'int8'], # Warning: Variable arguments based on first byte, cannot yet properly disassemble
+	0x3C: ['Blink', 'int8', 'varargs'], # Warning: Variable arguments based on strat runtime variable, though first byte seems to align with the number of arguments
 	0x3D: ['HoldTrigger'],
 	0x3E: ['ReleaseTrigger'],
 	0x3F: ['SetAnim', 'eval'],
 	0x40: ['TurnTowardXY', 'int16', 'eval', 'eval'],
 	0x41: ['CommandError'],
 	0x42: ['Hold'],
-	0x43: ['Release', 'string', ''],
-	0x44: ['Inc', 'int16'],
+	0x43: ['Release', 'string'],
+	0x44: ['Inc', 'int8', 'int16'],
 	0x45: ['PlayerAttackOn'],
 	0x46: ['PlayerAttackOff'],
 	0x47: ['CamWobble', 'eval'],
@@ -197,7 +197,7 @@ opcodes = {
 	0xAD: ['FirstWaypoint'],
 	0xAE: ['UntilImm', 'eval'],
 	0xAF: ['Collected'],
-	0xB0: ['Dec', 'int16'],
+	0xB0: ['Dec', 'int8', 'int16'],
 	0xB1: ['SpawnFrom', 'int32', 'int16', 'eval'], # Warning: Variable arguments, cannot yet properly disassemble
 	0xB2: ['LetXParam'],
 	0xB3: ['RemoveCrystal'],
@@ -529,6 +529,13 @@ def varargs(strat, op, args, instructions):
 		else:
 			args.append(unevaluate(strat))
 	
+	# Blink
+	elif (op == 0x3c):
+		count = args[0]
+		
+		for i in range(count):
+			args.append(strat.readInt16LE())
+	
 	return []
 
 def after(op):
@@ -538,8 +545,5 @@ def after(op):
 	
 	if (op == 0x39):
 		return "\n\n; -------------------------------------------------------------------\n "
-	
-	elif (op == 0x31 or op == 0x3c):
-		return "; BROKEN!!!"
 	
 	return ""

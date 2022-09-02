@@ -198,7 +198,7 @@ def disassemble(path, output):
 					elif (type == 'eval'):
 						args.append(gSpec.unevaluate(strat))
 					elif (type == 'varargs'):
-						args.append(gSpec.varargs(strat, opcode, args, instructions))
+						args += gSpec.varargs(strat, opcode, args, instructions)
 					else:
 						pass
 			
