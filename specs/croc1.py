@@ -51,7 +51,7 @@ opcodes = {
 	0x1B: ['EndCase', 'address16'],
 	0x1C: ['ProcCall', 'address16'],
 	0x1D: ['ResetPosition'],
-	0x1E: ['Goto', 'int16'],
+	0x1E: ['Goto', 'address16'],
 	0x1F: ['ScaleX', 'eval'],
 	0x20: ['ScaleY', 'eval'],
 	0x21: ['ScaleZ', 'eval'],
@@ -233,9 +233,9 @@ opcodes = {
 	0xD1: ['HeightFloat'],
 	0xD2: ['FlashOn'],
 	0xD3: ['FlashOff'],
-	0xD4: ['CommandError'],
-	0xD5: ['CommandError'],
-	0xD6: ['CommandError'],
+	0xD4: ['_Light_0xd4', 'eval'],
+	0xD5: ['_Light_0xd5', 'eval'],
+	0xD6: ['_Light_0xd6', 'eval', 'eval', 'eval'],
 	0xD7: ['CommandError'],
 	0xD8: ['CommandError'],
 	0xD9: ['CommandError'],
@@ -469,6 +469,12 @@ def unevaluate(strat):
 		elif (op == 0x23):
 			operations.append(Symbol("CheckAnimFlag32"))
 		
+		elif (op == 0x36):
+			operations.append(Symbol("OP36"))
+		
+		elif (op == 0x48):
+			operations.append(Symbol("OP48"))
+		
 		# 0x26 - Push zero and stop eval
 		elif (op == 0x26):
 			operations.append(Symbol("ReturnZero"))
@@ -525,7 +531,7 @@ def varargs(strat, op, args, instructions):
 		mode = args[0]
 		
 		if (mode in [0x1, 0x8, 0x9, 0xB]):
-			args.append(strat.readInt16LE())
+			pass
 		else:
 			args.append(unevaluate(strat))
 	
