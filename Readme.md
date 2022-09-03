@@ -31,7 +31,7 @@ Processing "strats/croc-de130/CROC.BIN" with spec "croc1" ⋅⋅⋅
 
 Part of the example output:
 
-```asm
+```c
 Label_b55:
 	TurnRight { PushExternGlobal 10 ReturnTop }
 	If { GetAVar 12 PushInt32 8 BitAnd ReturnTop } Label_ba9
@@ -60,6 +60,7 @@ Label_bc6:
 
 Label_bca:
 	EndProc
+	
 ```
 
 ### Advanced usage
