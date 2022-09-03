@@ -469,12 +469,6 @@ def unevaluate(strat):
 		elif (op == 0x23):
 			operations.append(Symbol("CheckAnimFlag32"))
 		
-		elif (op == 0x36):
-			operations.append(Symbol("OP36"))
-		
-		elif (op == 0x48):
-			operations.append(Symbol("OP48"))
-		
 		# 0x26 - Push zero and stop eval
 		elif (op == 0x26):
 			operations.append(Symbol("ReturnZero"))
