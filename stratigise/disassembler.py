@@ -153,12 +153,11 @@ def disassemble(path, output):
 	strat = BinaryReadStream(path)
 	instructions = StratInstructionList()
 	
-	# Read strat header
-	size = strat.readInt32LE()
-	secondint = strat.readInt32BE()
+	# Read strat headers
+	headers = []
 	
-	# Set starting comment
-	instructions.setPreamble(f"; Strat was {size} bytes long.\n; Second bytes were {formatHex(secondint)}\n\n")
+	if (hasattr(gSpec, "processHeaders")):
+		headers += gSpec.processHeaders(strat, instructions)
 	
 	# Read in opcodes
 	while (True):
