@@ -341,13 +341,13 @@ def unevaluate(strat):
 		elif (op == 0x07):
 			operations.append(Symbol("Subtract"))
 		
-		# 0x08 - Multiply between top values
+		# 0x08 - Divide between top values
 		elif (op == 0x08):
-			operations.append(Symbol("Multiply"))
-		
-		# 0x09 - Divide between top values
-		elif (op == 0x09):
 			operations.append(Symbol("Divide"))
+		
+		# 0x09 - Multiply between top values
+		elif (op == 0x09):
+			operations.append(Symbol("Multiply"))
 		
 		# 0x0A - Bitwise AND between top values
 		elif (op == 0x0A):
