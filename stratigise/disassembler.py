@@ -218,7 +218,7 @@ def disassemble(path, strat, section_info):
 	instructions.writeFile(path + section_info.extension)
 
 def handle_data(path, strat, section_info):
-	Path(path + section_info.extension).write_bytes(strat.readBytes(section_info.length))
+	Path(path + section_info.extension).write_bytes(strat.readBytes(section_info.length) or b"")
 
 SECTION_HANDLERS = {
 	"code": disassemble,
