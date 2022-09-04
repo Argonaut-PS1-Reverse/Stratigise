@@ -2,7 +2,18 @@
 Croc 2 opcodes
 """
 
+from stratigise.common import SectionInfo
+
 instructionSize = 4
+
+def processSections(strat):
+	# TODO: This is temporary
+	strat.file.seek(0, 2)
+	l = strat.getPos()
+	
+	return [
+		SectionInfo('code', 0, l, ".DIS", params = {}),
+	]
 
 opcodes = {
 	0x00: ['CommandError'],

@@ -33,6 +33,13 @@ class BinaryReadStream:
 		
 		return self.file.tell()
 	
+	def setPos(self, pos):
+		"""
+		Set the current file position
+		"""
+		
+		self.file.seek(pos)
+	
 	def readByte(self):
 		"""
 		Read and return a byte from the stream.
@@ -172,6 +179,18 @@ class BinaryReadStream:
 				break
 		
 		return string
+
+class SectionInfo:
+	"""
+	Information about a section of a strat file.
+	"""
+	
+	def __init__(self, type, start, length, extension, *, params = None):
+		self.type = type
+		self.start = start
+		self.length = length
+		self.extension = extension
+		self.params = params
 
 class Symbol:
 	"""

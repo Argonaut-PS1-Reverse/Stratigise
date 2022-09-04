@@ -47,7 +47,7 @@ def main(params):
 			path = params[i]
 			print(f"Processing \"{path}\" with spec \"{spec}\" ⋅⋅⋅")
 			dis.loadSpec(spec)
-			dis.disassemble(path, path + ".DIS")
+			dis.process(path)
 		
 		i += 1
 

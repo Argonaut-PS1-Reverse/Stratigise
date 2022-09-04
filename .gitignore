@@ -1,2 +1,4 @@
 *.DIS
+*.AXX
+*.ASF
 **/__pycache__

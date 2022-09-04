@@ -2,7 +2,8 @@
 Partially generic argonaut bytecode dissassemlber
 """
 
-from stratigise.common import BinaryReadStream, Symbol, formatHex, loadModule, getLabelString
+from pathlib import Path
+from stratigise.common import BinaryReadStream, Symbol, SectionInfo, formatHex, loadModule, getLabelString
 
 # Opcode table
 gSpec = None
@@ -145,19 +146,21 @@ class StratInstructionList:
 		
 		f.close()
 
-def disassemble(path, output):
+def disassemble(path, strat, section_info):
 	"""
-	Disassemble a strat
+	Does disassembly for code segments
 	"""
 	
-	strat = BinaryReadStream(path)
+	# Create instructions list
 	instructions = StratInstructionList()
 	
-	# Read strat headers
-	headers = []
+	# File header
+	header = f"; disassembly using stratigise\n\n"
 	
-	if (hasattr(gSpec, "processHeaders")):
-		headers += gSpec.processHeaders(strat, instructions)
+	for k, v in section_info.params.items():
+		header += f"@{k} {v}\n"
+	
+	instructions.setPreamble(header)
 	
 	# Read in opcodes
 	while (True):
@@ -177,6 +180,10 @@ def disassemble(path, output):
 				for arg in range(1, len(gSpec.opcodes[opcode])):
 					type = gSpec.opcodes[opcode][arg]
 					
+					# Break at end of section
+					if (strat.getPos() > (section_info.start + section_info.length)):
+						break
+					
 					# Based on the type, get the next value from the instruction stream appropraitely
 					if (type == 'string'):
 						args.append(strat.readString())
@@ -189,7 +196,7 @@ def disassemble(path, output):
 						instructions.addLabel(address)
 						args.append(Symbol(getLabelString(address)))
 					elif (type == 'address16'):
-						address = (strat.readInt16LE() or 1) + 0x4
+						address = (strat.readInt16LE() or 1) + 0x4 # HACK
 						instructions.addLabel(address)
 						args.append(Symbol(getLabelString(address)))
 					elif (type == 'int8'):
@@ -201,8 +208,39 @@ def disassemble(path, output):
 					else:
 						pass
 			
+			# Break at end of section
+			if (strat.getPos() > (section_info.start + section_info.length)):
+				break
+			
 			# Add instruction to bytecode tokens
 			instructions.addInstruction(Instruction(opcode, args, start))
 	
-	# Write disassembled file
-	instructions.writeFile(output)
+	instructions.writeFile(path + section_info.extension)
+
+def handle_data(path, strat, section_info):
+	Path(path + section_info.extension).write_bytes(strat.readBytes(section_info.length))
+
+SECTION_HANDLERS = {
+	"code": disassemble,
+	"data": handle_data,
+}
+
+def process(path):
+	"""
+	Process a strat
+	"""
+	
+	strat = BinaryReadStream(path)
+	
+	# Read strat headers and get sections
+	sections = []
+	
+	if (hasattr(gSpec, "processSections")):
+		sections += gSpec.processSections(strat)
+	else:
+		print("Error: Spec must have processSections in order to disassemble and read data.")
+		return
+	
+	for s in sections:
+		strat.setPos(s.start)
+		(SECTION_HANDLERS[s.type])(path, strat, s)
