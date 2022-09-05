@@ -314,17 +314,17 @@ def unevaluate(strat):
 		
 		# 0x01 - Get a PGVar (procedure global?)
 		elif (op == 0x01):
-			operations.append(Symbol("GetPGVar"))
+			operations.append(Symbol("PushPGVar"))
 			operations.append(strat.readInt16LE())
 		
 		# 0x02 - Get strat global value
 		elif (op == 0x02):
-			operations.append(Symbol("GetGVar"))
+			operations.append(Symbol("PushGVar"))
 			operations.append(strat.readInt16LE())
 		
 		# 0x03 - Load alien var (?)
 		elif (op == 0x03):
-			operations.append(Symbol("GetAVar"))
+			operations.append(Symbol("PushAVar"))
 			pp = strat.readInt16LE()
 			operations.append(pp)
 		
