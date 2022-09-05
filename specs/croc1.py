@@ -388,22 +388,36 @@ def unevaluate(strat):
 		
 		# 0x13 - Load 32-bit constants with advanced operations
 		elif (op == 0x13):
-			operations.append(Symbol("LongOperation"))
+			operations.append(Symbol("Resource"))
 			pp = strat.readInt8()
 			
-			# 0x01 - Long value with lookup
-			if (pp == 0x01):
-				operations.append(Symbol("SearchForWadEntry"))
+			# 0x01, 0x02, 0x03 - Long value with lookup
+			if (pp == 0x01 or pp == 0x02):
+				operations.append(Symbol("SearchForEntry"))
 				operations.append(strat.readInt32LE())
 				strat.readInt8() # ignore value
 				operations.append(strat.readString())
 			
-			# [0x02, 0x05] - Load long value and then read a byte N and skip N bytes
-			elif (pp == 0x02 or pp == 0x03 or pp == 0x04 or pp == 0x05):
+			# 0x04, 0x05 - Load long value and then read a byte N and skip N bytes
+			elif (pp == 0x03 or pp == 0x04 or pp == 0x05):
 				operations.append(Symbol("ReadInt32AndSkip"))
 				operations.append(strat.readInt32LE())
 				sz = strat.readInt8()
 				operations.append(strat.readBytes(sz).decode('latin-1'))
+			
+			# 0x09 - Seems to play sounds effects based on a distance to a camera
+			elif (pp == 0x09):
+				operations.append(Symbol("PlaySfx1"))
+				a = strat.readInt8()
+				operations.append(a)
+				operations.append(unevaluate(strat))
+				
+				if (a > 1):
+					operations.append(unevaluate(strat))
+				
+				if (a > 3):
+					operations.append(unevaluate(strat))
+					operations.append(unevaluate(strat))
 			
 			# 0x50 - Read int32 which is then shifted left 16 (0x10)
 			elif (pp == 0x50):
