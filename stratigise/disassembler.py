@@ -189,6 +189,10 @@ def disassemble(path, strat, section_info):
 						args.append(strat.readString())
 					elif (type == 'int32'):
 						args.append(strat.readInt32LE())
+					elif (type == 'offset32'):
+						address = strat.readInt32LE() + strat.getPos()
+						instructions.addLabel(address)
+						args.append(Symbol(getLabelString(address)))
 					elif (type == 'int16'):
 						args.append(strat.readInt16LE())
 					elif (type == 'offset16'):
