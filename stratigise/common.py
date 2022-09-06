@@ -40,6 +40,23 @@ class BinaryReadStream:
 		
 		self.file.seek(pos)
 	
+	def getLength():
+		"""
+		Get the length of the file
+		"""
+		
+		# Save old pos
+		old = self.getPos()
+		
+		# Get ending pos
+		self.file.seek(0, 2)
+		length = self.file.getPos()
+		
+		# Return old pos
+		self.setPos(old)
+		
+		return length
+	
 	def readByte(self):
 		"""
 		Read and return a byte from the stream.
