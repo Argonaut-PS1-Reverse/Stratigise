@@ -165,7 +165,7 @@ def disassemble(path, strat, section_info):
 	# Read in opcodes
 	while (True):
 		start = strat.getPos()
-		opcode = strat.readInt(gSpec.instructionSize)
+		opcode = gSpec.readOpcode(strat)
 		
 		# Break on EOF or incomplete opcode
 		if (opcode == None):

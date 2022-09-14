@@ -4,7 +4,8 @@ Croc 2 opcodes
 
 from stratigise.common import SectionInfo
 
-instructionSize = 4
+def readOpcode(strat):
+	return strat.readInt32LE()
 
 def processSections(strat):
 	# TODO: This is temporary

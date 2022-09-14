@@ -6,9 +6,10 @@ Croc 1 strat spec - opcodes and unevalute
 from stratigise.common import Symbol, SectionInfo, getLabelString
 
 """
-Set the width of the instruction opcode - for Croc 1 is is one byte.
+Read an opcode - for Croc 1 is is one byte.
 """
-instructionSize = 1
+def readOpcode(strat):
+	return strat.readInt8()
 
 """
 Processes the section data
@@ -388,7 +389,7 @@ def unevaluate(strat):
 		
 		# 0x13 - Load 32-bit constants with advanced operations
 		elif (op == 0x13):
-			operations.append(Symbol("Resource"))
+			operations.append(Symbol("Load"))
 			pp = strat.readInt8()
 			
 			# 0x01, 0x02, 0x03 - Long value with lookup
