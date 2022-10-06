@@ -1,0 +1,55 @@
+; disassembly using stratigise
+
+	ResetCamerapos
+	; !!! Unknown opcode: 0x53545254 !!!
+	Vibrate
+	Print 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	Hide 0
+	; !!! Unknown opcode: 0x74616857 !!!
+	; !!! Unknown opcode: 0x72657665 !!!
+	_BADOPCODE 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	; !!! Unknown opcode: 0x200 !!!
+	_BADOPCODE 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	; !!! Unknown opcode: 0x4800 !!!
+	; !!! Unknown opcode: 0x61685700 !!!
+	; !!! Unknown opcode: 0x65766574 !!!
+	; !!! Unknown opcode: 0x212072 !!!
+	; !!! Unknown opcode: 0x6c6c6548 !!!
+	; !!! Unknown opcode: 0x77202c6f !!!
+	; !!! Unknown opcode: 0x646c726f !!!
+	Target_AlienVarAddress 61
+	_BADOPCODE 0
+	_BADOPCODE -10740
+	; !!! Unknown opcode: 0x7f6e7d !!!
+	_BADOPCODE 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	_BADOPCODE 0
+	; !!! Unknown opcode: 0x5000 !!!
+	_BADOPCODE 0
+	; !!! Unknown opcode: 0xe00 !!!
+	; !!! Unknown opcode: 0x4400 !!!
+	; !!! Unknown opcode: 0x1004110 !!!
+	; !!! Unknown opcode: -0x2c00 !!!
+	_BADOPCODE -5632
+	_BADOPCODE -23552
+	; !!! Unknown opcode: -0x1 !!!
+	; !!! Unknown opcode: 0x10004ff !!!
+	; !!! Unknown opcode: 0x4400 !!!
+	; !!! Unknown opcode: 0x4e10 !!!
+	; !!! Unknown opcode: 0x4001400 !!!
+	; !!! Unknown opcode: 0x200 !!!
+	Getdoorpos
+	; !!! Unknown opcode: -0x1600 !!!
+	_BADOPCODE -28928
+	; !!! Unknown opcode: -0x1 !!!
+	; !!! Unknown opcode: -0x4b01 !!!
+	_BADOPCODE 8192

@@ -1,0 +1,21 @@
+; disassembly using stratigise
+
+@spec aladdin
+	Smallnumber 4096
+	Local_Equals 1
+	Debugname 234
+	; !!! Unknown opcode: -0x5c !!!
+	; !!! Unknown opcode: -0x1 !!!
+	Local 1
+	Smallnumber 4096
+	Compare
+	BeqImm Label_b9
+	Print 0
+
+Label_b9:
+	Hide 0
+	String
+	; !!! Unknown opcode: -0x71 !!!
+	; !!! Unknown opcode: -0x1 !!!
+	EndStrat
+	; !!! Unknown opcode: 0x454e4420 !!!

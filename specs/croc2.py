@@ -13,7 +13,7 @@ def processSections(strat):
 	l = strat.getPos()
 	
 	return [
-		SectionInfo('code', 0, l, ".DIS", params = {}),
+		SectionInfo('code', 0, l, ".dis", params = {}),
 	]
 
 opcodes = {

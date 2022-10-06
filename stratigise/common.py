@@ -40,7 +40,7 @@ class BinaryReadStream:
 		
 		self.file.seek(pos)
 	
-	def getLength():
+	def getLength(self):
 		"""
 		Get the length of the file
 		"""
@@ -50,7 +50,7 @@ class BinaryReadStream:
 		
 		# Get ending pos
 		self.file.seek(0, 2)
-		length = self.file.getPos()
+		length = self.getPos()
 		
 		# Return old pos
 		self.setPos(old)
