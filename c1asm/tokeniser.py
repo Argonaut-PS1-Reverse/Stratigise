@@ -66,7 +66,7 @@ def isNumeric(c):
 	
 	c = ord(c)
 	
-	return (c >= 0x30 and c <= 0x39)
+	return (c >= 0x30 and c <= 0x39) or (ord(".") == c)
 
 def isAlphaNumeric(c):
 	"""
@@ -111,6 +111,30 @@ def tokenise(path):
 			i -= 1
 			
 			tokens.append(Token(TokenType.SYMBOL, string))
+		
+		# Numbers
+		elif (isNumeric(c)):
+			string = ""
+			
+			while (True):
+				c = stream[i]
+				
+				if (not isNumeric(c)):
+					break
+				
+				string += c
+				
+				i += 1
+			
+			i -= 1
+			
+			# What kind of number though?
+			if ("." in string):
+				string = float(string)
+			else:
+				string = int(string)
+			
+			tokens.append(Token(TokenType.NUMBER, string))
 		
 		# Strings
 		elif (c == '"'):
