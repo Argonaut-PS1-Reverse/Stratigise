@@ -2,9 +2,6 @@
 Croc 1 strat spec - opcodes and unevalute
 """
 
-# Needed to create symbols in unevaluate
-from stratigise.common import Symbol, SectionInfo, getLabelString
-
 """
 Read an opcode - for Croc 1 is is one byte.
 """
@@ -15,6 +12,8 @@ def readOpcode(strat):
 Processes the section data
 """
 def processSections(strat):
+	from stratigise.common import SectionInfo
+	
 	# Read size of strat, audio upper number and audio start position
 	size = strat.readInt32LE()
 	audio_upper = strat.readInt16LE()
@@ -298,10 +297,65 @@ opcodes = {
 	0xFF: ['LewisTest', 'int8', 'eval'],
 }
 
+"""
+Unevalute names are now in a table so it's easier to reassemble strats
+"""
+EVALUATE_NAMES = {
+	0x00: None,
+	0x01: "PushPGVar",
+	0x02: "PushGVar",
+	0x03: "PushAVar",
+	0x04: "PushInt32",
+	0x05: None,
+	0x06: "Add",
+	0x07: "Subtract",
+	0x08: "Divide",
+	0x09: "Multiply",
+	0x0A: "BitAnd",
+	0x0B: "BitOr",
+	0x0C: "Equal",
+	0x0D: "NotEqual",
+	0x0E: "TopLess",
+	0x0F: "TopGreater",
+	0x10: "TopNotLess",
+	0x11: "TopNotGreater",
+	0x12: "ReturnTop",
+	0x13: {
+		0x01: "LoadObject",
+		0x02: "LoadAsset0",
+		0x03: "LoadAnim",
+		0x04: "LoadAsset1",
+		0x05: "LoadAsset2",
+		0x09: "LoadSound",
+		0x50: "LoadAsset3",
+		0x51: "LoadAsset4",
+		0x8E: "LoadAsset5",
+	},
+	0x14: "Sine",
+	0x15: "Cosine",
+	0x17: "SquareRoot",
+	0x18: "AbsoluteValue",
+	0x19: "RandomNumber",
+	0x1A: "FloorNumber",
+	0x1B: "PlayerIsWithinRadius2D",
+	0x1C: "PushExternGlobal",
+	0x1D: "PushValueFromIPAndOffset154",
+	0x1E: "Negate",
+	0x1F: "IsZero",
+	0x20: "TopPairNotZero",
+	0x21: "VelocityLessThan",
+	0x22: "DistanceFromPoint",
+	0x23: "CheckAnimFlag32",
+	0x26: "ReturnZero",
+}
+
 def unevaluate(strat):
 	"""
 	Croc 1 eval type handling
 	"""
+	
+	# This should be here so the reassembler doesn't try to import this
+	from stratigise.common import Symbol
 	
 	operations = []
 	
@@ -315,100 +369,100 @@ def unevaluate(strat):
 		
 		# 0x01 - Get a PGVar (procedure global?)
 		elif (op == 0x01):
-			operations.append(Symbol("PushPGVar"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			operations.append(strat.readInt16LE())
 		
 		# 0x02 - Get strat global value
 		elif (op == 0x02):
-			operations.append(Symbol("PushGVar"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			operations.append(strat.readInt16LE())
 		
 		# 0x03 - Load alien var (?)
 		elif (op == 0x03):
-			operations.append(Symbol("PushAVar"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			pp = strat.readInt16LE()
 			operations.append(pp)
 		
 		# 0x04 - Read a long value
 		elif (op == 0x04):
-			operations.append(Symbol("PushInt32"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			operations.append(strat.readInt32LE())
 		
 		# 0x06 - Add between top values (A + B)
 		elif (op == 0x06):
-			operations.append(Symbol("Add"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x07 - Subtract between top values (B - A)
 		elif (op == 0x07):
-			operations.append(Symbol("Subtract"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x08 - Divide between top values
 		elif (op == 0x08):
-			operations.append(Symbol("Divide"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x09 - Multiply between top values
 		elif (op == 0x09):
-			operations.append(Symbol("Multiply"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x0A - Bitwise AND between top values
 		elif (op == 0x0A):
-			operations.append(Symbol("BitAnd"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x0B - Bitwise OR between top values
 		elif (op == 0x0B):
-			operations.append(Symbol("BitOr"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x0C - Unknown but usually followed by string litral
 		elif (op == 0x0C):
-			operations.append(Symbol("CmpEqual"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x0D - Unknown but usually followed by string literal
 		elif (op == 0x0D):
-			operations.append(Symbol("CmpNotEuqal"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x0E - Compare A < B
 		elif (op == 0x0E):
-			operations.append(Symbol("CmpTopLess"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x0F - Compare B < A (A > B)
 		elif (op == 0x0F):
-			operations.append(Symbol("CmpTopGreater"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x10 - Compare A < B then XOR 1
 		elif (op == 0x10):
-			operations.append(Symbol("CmpNotTopLess"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x11 - Compare B < A then XOR 1 ((A > B) ^ 1)
 		elif (op == 0x11):
-			operations.append(Symbol("CmpNotTopGreater"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x12 - Pop top stack value and return
 		elif (op == 0x12):
-			operations.append(Symbol("ReturnTop"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			break
 		
-		# 0x13 - Load 32-bit constants with advanced operations
+		# 0x13 - Load assets
 		elif (op == 0x13):
-			operations.append(Symbol("Load"))
 			pp = strat.readInt8()
 			
-			# 0x01, 0x02, 0x03 - Long value with lookup
+			# 0x01, 0x02 - These try to find if the asset is already loaded in memory first
 			if (pp == 0x01 or pp == 0x02):
-				operations.append(Symbol("SearchForEntry"))
+				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				operations.append(strat.readInt32LE())
 				strat.readInt8() # ignore value
 				operations.append(strat.readString())
 			
-			# 0x04, 0x05 - Load long value and then read a byte N and skip N bytes
+			# 0x03, 0x04, 0x05 - These just seem to directly load the asset
 			elif (pp == 0x03 or pp == 0x04 or pp == 0x05):
-				operations.append(Symbol("ReadInt32AndSkip"))
+				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				operations.append(strat.readInt32LE())
 				sz = strat.readInt8()
 				operations.append(strat.readBytes(sz).decode('latin-1'))
 			
 			# 0x09 - Seems to play sounds effects based on a distance to a camera
+			# Just saying LoadSound since 13 XX seem to be related to asset loading
 			elif (pp == 0x09):
-				operations.append(Symbol("PlaySfx1"))
+				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				a = strat.readInt8()
 				operations.append(a)
 				operations.append(unevaluate(strat))
@@ -422,7 +476,7 @@ def unevaluate(strat):
 			
 			# 0x50 - Read int32 which is then shifted left 16 (0x10)
 			elif (pp == 0x50):
-				operations.append(Symbol("ReadInt32ShiftedLeft16"))
+				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				operations.append(strat.readInt32LE() >> 0x10)
 				sz = strat.readInt8()
 				operations.append(strat.readBytes(sz).decode('latin-1'))
@@ -431,7 +485,7 @@ def unevaluate(strat):
 			# both seem to do the broing "load a 32-bit" integer routine
 			# like most things here seem to do...
 			elif (pp == 0x51 or pp == 0x8E):
-				operations.append(Symbol("UnknownLongOperation1"))
+				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				operations.append(strat.readInt32LE())
 		
 		# NOTE: Assume the following math functions replace the top of the stack
@@ -439,72 +493,72 @@ def unevaluate(strat):
 		
 		# 0x14 - Sine(top value on the stack << 16)
 		elif (op == 0x14):
-			operations.append(Symbol("Sine"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x15 - Cosine(top value on the stack << 16)
 		elif (op == 0x15):
-			operations.append(Symbol("Cosine"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x17 - Square root of the top stack value
 		elif (op == 0x17):
-			operations.append(Symbol("SquareRoot"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x18 - Absolute value of the top stack value
 		elif (op == 0x18):
-			operations.append(Symbol("AbsoluteValue"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x19 - (Random number) % top of stack
 		elif (op == 0x19):
-			operations.append(Symbol("RandomNumber"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x1A - Floor the top of the stack (for fixed point numbers)
 		elif (op == 0x1A):
-			operations.append(Symbol("FloorNumber"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x1B - Check if the player is within the given radius (disregarding height) at the top of the stack
 		elif (op == 0x1B):
-			operations.append(Symbol("PlayerIsWithinRadius2D"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x1C - Push extern global to the stack
 		elif (op == 0x1C):
-			operations.append(Symbol("PushExternGlobal"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			operations.append(strat.readInt16LE())
 		
 		# 0x1D - Load value from (instructionPointer + offset + 0x154)
 		elif (op == 0x1D):
-			operations.append(Symbol("PushValueFromIPAndOffset154"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			operations.append(strat.readInt16LE())
 		
 		# 0x1E - Negate top value on the stack
 		elif (op == 0x1E):
-			operations.append(Symbol("Negate"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x1F - Compare to zero, push 1 if is zero and 0 otherwise (A == 0)
 		elif (op == 0x1F):
-			operations.append(Symbol("CmpIsZero"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x20 - Pop the first two stack values, check are not zero and place
 		# result in second down stack value
 		elif (op == 0x20):
-			operations.append(Symbol("TopPairNotZero"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x21 - Check if the strat's velocity is under the value on top of stack (unsure)
 		elif (op == 0x21):
-			operations.append(Symbol("VelocityLessThan"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x22 - Pop top three values as point and push distance to that point
 		elif (op == 0x22):
-			operations.append(Symbol("DistanceFromPoint"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x23 - Check if higest bit on strat anim flags is set and decrement 
 		# the stack pointer if so (seems very sepcific so not confident in this)
 		# Flag32 referes to 32nd flag, not 32-bit integer
 		elif (op == 0x23):
-			operations.append(Symbol("CheckAnimFlag32"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x26 - Push zero and stop eval
 		elif (op == 0x26):
-			operations.append(Symbol("ReturnZero"))
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 			break
 		
 		# Unknown eval opcode
@@ -518,6 +572,8 @@ def varargs(strat, op, args, instructions):
 	"""
 	Variable arguments handling
 	"""
+	
+	from stratigise.common import Symbol, getLabelString
 	
 	# Play sound
 	if (op == 0x09):
