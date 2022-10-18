@@ -15,7 +15,7 @@ This is mainly meant for *Croc: Legend of the Gobbos*, but the dissassember trie
 To disassemble a single strat, put it as `decompile.py`'s first argument:
 
 ```zsh
-$ ./decompile.py path/to/the/STRAT.BIN
+$ ./disassemble.py path/to/the/STRAT.BIN
 ```
 
 It will output a file with the original name plus the `.DIS` extension.
@@ -25,7 +25,7 @@ It will output a file with the original name plus the `.DIS` extension.
 There are some examples strats from Croc DE in the `strats` folder:
 
 ```
-$ ./decompile.py strats/croc-de130/CROC.BIN
+$ ./disassemble.py strats/croc-de130/CROC.BIN
 Processing "strats/croc-de130/CROC.BIN" with spec "croc1" ⋅⋅⋅
 ```
 
@@ -68,7 +68,7 @@ Label_bca:
 You can pass in multipule files and use `--spec` to set the disassembler:
 
 ```
-decompile.py --spec gamename1 file1 file2 ... --spec gamename2 file1 file2 ...
+disassemble.py --spec gamename1 file1 file2 ... --spec gamename2 file1 file2 ...
 ```
 
 ## Todo
