@@ -8,10 +8,7 @@ import importlib.util as imut
 
 class BinaryReadStream:
 	"""
-	A binary file stream supporting only needed operations.
-	
-	TODO: There is probably some more standardised way to do this that I still
-	need to find out about.
+	Stream for reading a binary file
 	"""
 	
 	def __init__(self, path):
@@ -196,6 +193,104 @@ class BinaryReadStream:
 				break
 		
 		return string
+
+class BinaryWriteStream:
+	"""
+	Stream for writing a binary file
+	"""
+	
+	def __init__(self, path):
+		"""
+		Open the file
+		"""
+		self.file = open(path, "wb")
+	
+	def __del__(self):
+		"""
+		Close the file assocaited with the stream
+		"""
+		self.file.close()
+	
+	def getPos(self):
+		"""
+		Get the current file position
+		"""
+		
+		return self.file.tell()
+	
+	def setPos(self, pos):
+		"""
+		Set the current file position
+		"""
+		
+		self.file.seek(pos)
+	
+	def getLength(self):
+		"""
+		Get the length of the file
+		"""
+		
+		# Save old pos
+		old = self.getPos()
+		
+		# Get ending pos
+		self.file.seek(0, 2)
+		length = self.getPos()
+		
+		# Return old pos
+		self.setPos(old)
+		
+		return length
+	
+	def writeBytes(self, data):
+		"""
+		Read and return bytes from the stream.
+		"""
+		
+		self.file.write(data)
+	
+	def writeInt32LE(self, data):
+		"""
+		Write a 32-bit little-endian integer.
+		"""
+		
+		b = struct.pack("<i", data)
+		
+		self.writeBytes(b)
+	
+	def writeInt16LE(self, data):
+		"""
+		Write a 16-bit little-endian integer.
+		"""
+		
+		b = struct.pack("<h", data)
+		
+		self.writeBytes(b)
+	
+	def writeInt8(self, data):
+		"""
+		Write a 8-bit integer.
+		"""
+		
+		b = struct.pack("B", data)
+		
+		self.writeBytes(b)
+	
+	def readString(self, string, nul_terminated = False):
+		"""
+		Write a string, either with one byte having the length or as a NUL
+		terminated string.
+		"""
+		
+		s = string.encode('latin_1')
+		
+		if (not nul_terminated):
+			self.writeBytes(struct.pack("B", len(string)))
+		
+		self.writeBytes(s)
+		
+		if (nul_terminated):
+			self.writeBytes(b'\x00')
 
 class SectionInfo:
 	"""

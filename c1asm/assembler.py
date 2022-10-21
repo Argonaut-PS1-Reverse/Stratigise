@@ -85,13 +85,13 @@ class TokenList:
 		
 		return self.tokens[current - 1]
 	
-	def expect(self, kind, message):
+	def expect(self, kind, message = "Expected a different type of token from the one that was found."):
 		"""
 		Expect a certian kind of token and increment if found
 		"""
 		
 		if (self.tokens[current].kind != kind):
-			raise Exception(message)
+			raise Exception("Syntax Error: " + message)
 		
 		return self.next()
 	
@@ -109,40 +109,119 @@ class TokenList:
 		
 		return (len(self.tokens) <= self.current)
 
-def assemble(tokens):
+def assemble(strat, tokens):
 	"""
-	Assemble the tokenised input to a binary
+	Assemble the tokenised input to bytecode. This only does the body, not headers
+	(or in the case of Croc 1) audio data.
+	
+	strat: The input file
+	tokens: The tokens of the strat
 	"""
 	
 	tokens = TokenList(tokens)
 	
 	# We will need to keep track of the addresses to rewrite later
-	rewrite_list = {}
+	rewrite_list = []
+	
+	# To make things easier we will also keep track of where labels are
+	label_locations = {}
+	
+	# Also we should read attributes :)
+	attributes = {}
+	
+	###############################
+	# First Pass - Assemble strat
+	###############################
 	
 	while (not tokens.done()):
 		# Handle an instruction
 		# It's not the nicest thing ever.
 		if (tokens.matchData(TokenType.SYMBOL, gSpec.opcodes.keys())):
-			op = tokens.next().kind
+			# Get the opcode name string
+			op = tokens.next().value
 			
+			# Get the opcode 
+			op_num = gSpec.opcodes[op][0]
+			
+			# Write the opcode
+			if (hasattr(gSpec, "writeOpcode")):
+				gSpec.writeOpcode(strat, op_num)
+			else:
+				strat.writeInt8(op_num)
+			
+			# Write opcode arguments, and handle any errors related to them.
 			i = 1
 			
-			while (i < len(gSpec.opcodes[op]))
-				# Handle each type of argument
-				match (gSpec.opcodes[op][i]):
-					case 'int8':
-						tokens.expect(TokenType.NUMBER, f"{op} expects a number (8 bit) for {i}th argument.")
+			while (i < len(gSpec.opcodes[op])):
+				arg_type = gSpec.opcodes[op][i]
+				
+				match (arg_type):
+					case ['int8', 'int16', 'int32']:
+						number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
+						
+						if (type(number.value) == float):
+							# 20.12 and 4.12 fixed point number encode
+							number = int(number.value * 4096.0)
+						
+						match (arg_type):
+							case 'int8' : strat.writeInt8(number)
+							case 'int16': strat.writeInt16LE(number)
+							case 'int32': strat.writeInt32LE(number)
 					
 					case 'address16', 'offset16':
-						tokens.expect(TokenType.SYMBOL, f"{op} expects a label for {i}th argument.")
+						label = tokens.expect(TokenType.SYMBOL, f"{op} expects a label for {i}th argument.")
+						
+						# Add to patch table
+						rewrite_list.append({
+							"pos": strat.getPos(),
+							"label": label,
+							"relative": (True if (arg_type == "offset16") else False)
+						})
+						
+						# Just write zero for now
+						strat.writeInt16LE(0)
+					
+					case 'varargs':
+						# TODO
+						pass
 					
 					case 'eval':
-						gSpec.reevaluate(tokens)
+						# This will be handled by the spec
+						gSpec.reevaluate(strat, tokens)
 		
 		# Handle a label
-		elif (tokens.match(TokenType.SYMBOL))
+		elif (tokens.match(TokenType.SYMBOL)):
+			label = tokens.next()
+			
+			tokens.expect(TokenType.COLON, f"Expected colon after label by name '{label.value}'. (Maybe you misspelled an instruction?)")
+			
+			label_locations[label.value] = strat.getPos()
+		
+		# Handle an attirbute e.g. @ <symbol> <string|int>
+		elif (tokens.match(TokenType.ATTRIBUTE)):
+			tokens.next()
+			
+			# Expect the attribute name
+			attr_name = tokens.expect(TokenType.SYMBOL, "Did not find symbol after attribute.").value
+			
+			# Get the attribute value
+			attributes[attr_name] = tokens.next().value
+		
+		# Error condition
+		else:
+			tokens.expect(TokenType.INVALID, "Don't know what is happening right now.")
 	
-	return (instructions, labels)
+	end_pos = strat.getPos()
+	
+	###############################
+	# Second Pass - Patch missing addresses
+	###############################
+	
+	for r in rewrite_list:
+		strat.setPos(r["pos"])
+		strat.writeInt16LE((label_locations[r["label"]] - r["pos"]) if (r["relative"]) else (label_locations[r["label"]]))
+	
+	return end_pos
 
 if (__name__ == "__main__"):
 	import sys
