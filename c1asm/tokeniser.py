@@ -25,9 +25,10 @@ class Token:
 	A token 
 	"""
 	
-	def __init__(self, kind, data = None):
+	def __init__(self, kind, data = None, location = None):
 		self.kind = kind
 		self.data = data
+		self.location = location
 	
 	def __format__(self, _unused):
 		match (self.kind):
@@ -110,7 +111,7 @@ def tokenise(path):
 			
 			i -= 1
 			
-			tokens.append(Token(TokenType.SYMBOL, string))
+			tokens.append(Token(TokenType.SYMBOL, string, i))
 		
 		# Numbers
 		elif (isNumeric(c)):
@@ -134,7 +135,7 @@ def tokenise(path):
 			else:
 				string = int(string)
 			
-			tokens.append(Token(TokenType.NUMBER, string))
+			tokens.append(Token(TokenType.NUMBER, string, i))
 		
 		# Strings
 		elif (c == '"'):
@@ -152,22 +153,22 @@ def tokenise(path):
 				
 				i += 1
 			
-			tokens.append(Token(TokenType.STRING, string))
+			tokens.append(Token(TokenType.STRING, string, i))
 		
 		elif (c == ":"):
-			tokens.append(Token(TokenType.COLON))
+			tokens.append(Token(TokenType.COLON, location = i))
 		
 		elif (c == "{"):
-			tokens.append(Token(TokenType.OPEN_BRACKET))
+			tokens.append(Token(TokenType.OPEN_BRACKET, location = i))
 		
 		elif (c == "}"):
-			tokens.append(Token(TokenType.CLOSE_BRACKET))
+			tokens.append(Token(TokenType.CLOSE_BRACKET, location = i))
 		
 		elif (c == "@"):
-			tokens.append(Token(TokenType.ATTRIBUTE))
+			tokens.append(Token(TokenType.ATTRIBUTE, location = i))
 		
 		else:
-			print(f"Warning: Unknown char '{c}'")
+			print(f"Warning: Unknown char '{c}' at {i}")
 		
 		i += 1
 	
