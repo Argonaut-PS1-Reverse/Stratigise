@@ -4,11 +4,9 @@
 > 
 > This project does not always produce vaild disassemblies at time of writing. If you see `CommandError`, `__unknown_operation_0x`[...] or anything suspicous, that means something went wrong and you can't trust anything written after or slightly before that instruction.
 
-This is a work-in-progress dissassembler meant to aid in understanding what strats are doing.
+This is a work-in-progress assembler and dissassembler meant to aid in understanding what strats are doing in games created by Argonaut Games.
 
-It cannot reassemble strats at the moment and isn't meant for serious use.
-
-This is mainly meant for *Croc: Legend of the Gobbos*, but the dissassember tries to be generic.
+It is not currently meant for serious use.
 
 ## Usage
 
@@ -84,6 +82,10 @@ disassemble.py --spec gamename1 file1 file2 ... --spec gamename2 file1 file2 ...
  * Cleaner parsing and an actual intermediate representation
  * Re-assembling dissassembled files
  * Clean implementation, possibly in C
+
+### Assembler
+
+ * Make it more generic, currently only doing Croc 1 properly
 
 ## More Info
 
