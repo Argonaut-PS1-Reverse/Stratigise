@@ -8,7 +8,6 @@ in those files.
 
 import common
 from tokeniser import Token, TokenType
-import exceptions
 
 gSpec = None
 
@@ -19,7 +18,7 @@ def loadSpec(name):
 	
 	global gSpec
 	
-	gSpec = common.loadModule(f"specs/{name}.py")
+	gSpec = common.loadModule(f"../specs/{name}.py")
 	
 	# Swap opcode keys and values
 	new_opcodes = {}
@@ -63,7 +62,7 @@ class TokenList:
 		Check if a token matches a specific kind
 		"""
 		
-		return (self.tokens[current].kind == kind)
+		return (self.tokens[self.current].kind == kind)
 	
 	def matchData(self, kind, allowedValues):
 		"""
@@ -71,26 +70,26 @@ class TokenList:
 		data values
 		"""
 		
-		return ((self.tokens[current].kind == kind) and (self.tokens[current].data in allowedValues))
+		return ((self.tokens[self.current].kind == kind) and (self.tokens[self.current].data in allowedValues))
 	
 	def next(self):
 		"""
 		Go to the next token, returning the current
 		"""
 		
-		current += 1
+		self.current += 1
 		
 		if (len(self.tokens) < self.current):
 			raise Exception("Unexpected end of file - perhaps you forgot to include an argument on the last operation?")
 		
-		return self.tokens[current - 1]
+		return self.tokens[self.current - 1]
 	
 	def expect(self, kind, message = "Expected a different type of token from the one that was found."):
 		"""
 		Expect a certian kind of token and increment if found
 		"""
 		
-		if (self.tokens[current].kind != kind):
+		if (self.tokens[self.current].kind != kind):
 			raise Exception("Syntax Error: " + message)
 		
 		return self.next()
@@ -100,7 +99,7 @@ class TokenList:
 		Return where the current token was in the source stream
 		"""
 		
-		return self.tokens[current].location
+		return self.tokens[self.current].location
 	
 	def done(self):
 		"""
@@ -138,7 +137,7 @@ def assemble(strat, tokens):
 		# It's not the nicest thing ever.
 		if (tokens.matchData(TokenType.SYMBOL, gSpec.opcodes.keys())):
 			# Get the opcode name string
-			op = tokens.next().value
+			op = tokens.next().data
 			
 			# Get the opcode 
 			op_num = gSpec.opcodes[op][0]
@@ -159,9 +158,9 @@ def assemble(strat, tokens):
 					case ['int8', 'int16', 'int32']:
 						number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
 						
-						if (type(number.value) == float):
+						if (type(number.data) == float):
 							# 20.12 and 4.12 fixed point number encode
-							number = int(number.value * 4096.0)
+							number = int(number.data * 4096.0)
 						
 						match (arg_type):
 							case 'int8' : strat.writeInt8(number)
@@ -193,19 +192,19 @@ def assemble(strat, tokens):
 		elif (tokens.match(TokenType.SYMBOL)):
 			label = tokens.next()
 			
-			tokens.expect(TokenType.COLON, f"Expected colon after label by name '{label.value}'. (Maybe you misspelled an instruction?)")
+			tokens.expect(TokenType.COLON, f"Expected colon after label by name '{label.data}'. (Maybe you misspelled an instruction?)")
 			
-			label_locations[label.value] = strat.getPos()
+			label_locations[label.data] = strat.getPos()
 		
 		# Handle an attirbute e.g. @ <symbol> <string|int>
 		elif (tokens.match(TokenType.ATTRIBUTE)):
 			tokens.next()
 			
 			# Expect the attribute name
-			attr_name = tokens.expect(TokenType.SYMBOL, "Did not find symbol after attribute.").value
+			attr_name = tokens.expect(TokenType.SYMBOL, "Did not find symbol after attribute.").data
 			
 			# Get the attribute value
-			attributes[attr_name] = tokens.next().value
+			attributes[attr_name] = tokens.next().data
 		
 		# Error condition
 		else:
@@ -227,4 +226,5 @@ if (__name__ == "__main__"):
 	import sys
 	from tokeniser import tokenise
 	
-	assemble(tokenise(sys.argv[1]))
+	loadSpec("croc1")
+	assemble(common.BinaryWriteStream("testfile.bin"), tokenise(sys.argv[1]))

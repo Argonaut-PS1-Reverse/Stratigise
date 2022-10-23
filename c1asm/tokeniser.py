@@ -92,7 +92,7 @@ def tokenise(path):
 		c = stream[i]
 		
 		# Whitespace
-		if (c in '\t\r '):
+		if (c in '\n\t\r '):
 			pass
 		
 		# Symbols
@@ -166,6 +166,16 @@ def tokenise(path):
 		
 		elif (c == "@"):
 			tokens.append(Token(TokenType.ATTRIBUTE, location = i))
+		
+		# Comments
+		elif (c == ";"):
+			while (True):
+				i += 1
+				
+				c = stream[i]
+				
+				if (c == '\n' or c == '\r'):
+					break
 		
 		else:
 			print(f"Warning: Unknown char '{c}' at {i}")
