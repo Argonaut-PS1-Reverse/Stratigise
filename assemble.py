@@ -32,7 +32,7 @@ def main(input, output):
 	
 	# Write real header
 	f.setPos(0)
-	f.writeInt32LE(filesize - 4)
+	f.writeInt32LE(filesize - 8)
 	f.writeInt16LE(attr["audio_upper"])
 	f.writeInt16LE(end - 4)
 

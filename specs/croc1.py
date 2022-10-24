@@ -25,7 +25,7 @@ def processSections(strat):
 	
 	return [
 		SectionInfo('code', 8, code_size, ".DIS", params = {"original_size": size, "original_audio_start": audio_start, "audio_upper": audio_upper}),
-		SectionInfo('data', 8 + code_size, audio_size, ".AXX"),
+		SectionInfo('data', 8 + code_size, audio_size + 4, ".AXX"),
 	]
 
 """
