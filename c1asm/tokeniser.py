@@ -67,7 +67,7 @@ def isNumeric(c):
 	
 	c = ord(c)
 	
-	return (c >= 0x30 and c <= 0x39) or (ord(".") == c)
+	return (c >= 0x30 and c <= 0x39) or (ord(".") == c) or (ord("-") == c)
 
 def isAlphaNumeric(c):
 	"""

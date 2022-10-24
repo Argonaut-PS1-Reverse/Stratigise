@@ -90,7 +90,7 @@ class TokenList:
 		"""
 		
 		if (self.tokens[self.current].kind != kind):
-			raise Exception("Syntax Error: " + message)
+			raise Exception(f"Syntax Error: {self.tokens[self.current]}: {message}")
 		
 		return self.next()
 	
@@ -139,6 +139,8 @@ def assemble(strat, tokens):
 			# Get the opcode name string
 			op = tokens.next().data
 			
+			# print(op)
+			
 			# Get the opcode 
 			op_num = gSpec.opcodes[op][0]
 			
@@ -154,20 +156,24 @@ def assemble(strat, tokens):
 			while (i < len(gSpec.opcodes[op])):
 				arg_type = gSpec.opcodes[op][i]
 				
+				# print(f"\t{arg_type}")
+				
 				match (arg_type):
-					case ['int8', 'int16', 'int32']:
+					case 'int8' | 'int16' | 'int32':
 						number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
 						
 						if (type(number.data) == float):
 							# 20.12 and 4.12 fixed point number encode
 							number = int(number.data * 4096.0)
+						else:
+							number = int(number.data)
 						
 						match (arg_type):
 							case 'int8' : strat.writeInt8(number)
 							case 'int16': strat.writeInt16LE(number)
 							case 'int32': strat.writeInt32LE(number)
 					
-					case 'address16', 'offset16':
+					case 'address16' | 'offset16':
 						label = tokens.expect(TokenType.SYMBOL, f"{op} expects a label for {i}th argument.")
 						
 						# Add to patch table
@@ -181,12 +187,14 @@ def assemble(strat, tokens):
 						strat.writeInt16LE(0)
 					
 					case 'varargs':
-						# TODO
-						pass
+						# Needs to be handled by spec
+						gSpec.revarargs(strat, tokens)
 					
 					case 'eval':
 						# This will be handled by the spec
 						gSpec.reevaluate(strat, tokens)
+				
+				i += 1
 		
 		# Handle a label
 		elif (tokens.match(TokenType.SYMBOL)):
@@ -208,7 +216,8 @@ def assemble(strat, tokens):
 		
 		# Error condition
 		else:
-			tokens.expect(TokenType.INVALID, "Don't know what is happening right now.")
+			# tokens.expect(TokenType.INVALID, "Don't know what is happening right now.")
+			print(f"Don't know what is happening right now. {tokens.next()}")
 	
 	end_pos = strat.getPos()
 	

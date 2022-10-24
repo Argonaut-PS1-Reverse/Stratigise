@@ -568,6 +568,25 @@ def unevaluate(strat):
 	
 	return operations
 
+def reevaluate(strat, tokens):
+	"""
+	Croc 1 style evaluate handling when compiling
+	"""
+	
+	from tokeniser import TokenType, Token
+	
+	# We can just skip this for now...
+	
+	tokens.expect(TokenType.OPEN_BRACKET, "Got eval without opening brace")
+	
+	i = Token(TokenType.INVALID)
+	
+	while (i.kind != TokenType.CLOSE_BRACKET):
+		i = tokens.next()
+		# print(f"\t\t{i}")
+	
+	return
+
 def varargs(strat, op, args, instructions):
 	"""
 	Variable arguments handling
@@ -626,6 +645,9 @@ def varargs(strat, op, args, instructions):
 			args.append(strat.readInt16LE())
 	
 	return []
+
+def revarargs(strat, tokens):
+	
 
 def after(op):
 	"""
