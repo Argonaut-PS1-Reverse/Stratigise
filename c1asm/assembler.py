@@ -6,8 +6,8 @@ cannot actually reassemble Croc 2 strats or anything else due to the other data
 in those files.
 """
 
-import common
-from tokeniser import Token, TokenType
+import c1asm.common as common
+from c1asm.tokeniser import Token, TokenType
 
 gSpec = None
 
@@ -18,7 +18,7 @@ def loadSpec(name):
 	
 	global gSpec
 	
-	gSpec = common.loadModule(f"../specs/{name}.py")
+	gSpec = common.loadModule(f"specs/{name}.py")
 	
 	# Swap opcode keys and values
 	new_opcodes = {}
@@ -252,7 +252,7 @@ def assemble(strat, tokens):
 		strat.setPos(r["pos"])
 		strat.writeInt16LE((label_locations[r["label"]] - r["pos"] - 2) if (r["relative"]) else (label_locations[r["label"]] - 8))
 	
-	return end_pos
+	return end_pos, attributes
 
 if (__name__ == "__main__"):
 	import sys

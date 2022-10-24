@@ -572,7 +572,7 @@ def reevaluate(strat, tokens):
 	Croc 1 style evaluate handling when compiling
 	"""
 	
-	from tokeniser import TokenType, Token
+	from c1asm.tokeniser import TokenType, Token
 	
 	# We can just skip this for now...
 	
@@ -686,7 +686,7 @@ def revarargs(strat, tokens, command, rewrite_list):
 	so it takes a larger part in parsing the input
 	"""
 	
-	from tokeniser import TokenType, Token
+	from c1asm.tokeniser import TokenType, Token
 	
 	# print(command)
 	

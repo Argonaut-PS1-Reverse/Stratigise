@@ -2,7 +2,7 @@
 Splits disassembler output into tokens
 """
 
-from common import BinaryReadStream
+from c1asm.common import BinaryReadStream
 import enum
 
 class TokenType(enum.Enum):
