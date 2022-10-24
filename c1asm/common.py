@@ -276,7 +276,7 @@ class BinaryWriteStream:
 		
 		self.writeBytes(b)
 	
-	def writeString(self, string, nul_terminated = False):
+	def writeString(self, string, have_length = True, nul_terminated = False):
 		"""
 		Write a string, either with one byte having the length or as a NUL
 		terminated string.
@@ -284,13 +284,13 @@ class BinaryWriteStream:
 		
 		s = string.encode('latin_1')
 		
-		if (not nul_terminated):
-			self.writeBytes(struct.pack("B", len(string)))
+		if (nul_terminated):
+			s += b"\x00"
+		
+		if (have_length):
+			self.writeBytes(struct.pack("B", len(s)))
 		
 		self.writeBytes(s)
-		
-		if (nul_terminated):
-			self.writeBytes(b'\x00')
 
 class SectionInfo:
 	"""

@@ -38,11 +38,21 @@ def loadSpec(name):
 			oldleft = i
 			oldright = gSpec.EVALUATE_NAMES[i]
 			
-			# Don't write these, they are special
-			if (oldright == None or type(oldright) == dict):
+			# For dicts, swap internally, this will be useful later :-)
+			if (type(oldright) == dict):
+				newdict = {}
+				
+				for j in oldright: newdict[oldright[j]] = j
+				
+				new_evalname[oldleft] = newdict
+			
+			# For nonetypes, don't do anything
+			elif (oldright == None):
 				continue
 			
-			new_evalname[oldright] = oldleft
+			# Swap any others
+			else:
+				new_evalname[oldright] = oldleft
 		
 		gSpec.EVALUATE_NAMES = new_evalname
 
@@ -179,11 +189,7 @@ def assemble(strat, tokens):
 						case 'int8' | 'int16' | 'int32':
 							number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
 							
-							if (type(number.data) == float):
-								# 20.12 and 4.12 fixed point number encode
-								number = int(number.data * 4096.0)
-							else:
-								number = int(number.data)
+							number = number.data
 							
 							match (arg_type):
 								case 'int8' : strat.writeInt8(number)
@@ -244,7 +250,7 @@ def assemble(strat, tokens):
 	
 	for r in rewrite_list:
 		strat.setPos(r["pos"])
-		strat.writeInt16LE((label_locations[r["label"]] - r["pos"]) if (r["relative"]) else (label_locations[r["label"]]))
+		strat.writeInt16LE((label_locations[r["label"]] - r["pos"] - 2) if (r["relative"]) else (label_locations[r["label"]] - 8))
 	
 	return end_pos
 
@@ -253,4 +259,7 @@ if (__name__ == "__main__"):
 	from tokeniser import tokenise
 	
 	loadSpec("croc1")
-	assemble(common.BinaryWriteStream("testfile.bin"), tokenise(sys.argv[1]))
+	f = common.BinaryWriteStream("testfile.bin")
+	f.writeInt32LE(0)
+	f.writeInt32LE(0)
+	assemble(f, tokenise(sys.argv[1]))

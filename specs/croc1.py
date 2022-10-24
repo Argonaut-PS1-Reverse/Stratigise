@@ -456,7 +456,7 @@ def unevaluate(strat):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				operations.append(strat.readInt32LE())
 				sz = strat.readInt8()
-				operations.append(strat.readBytes(sz).decode('latin-1'))
+				operations.append(strat.readBytes(sz).decode('latin-1').replace('\x00', ''))
 			
 			# 0x09 - Seems to play sounds effects based on a distance to a camera
 			# Just saying LoadSound since 13 XX seem to be related to asset loading
@@ -476,7 +476,7 @@ def unevaluate(strat):
 			# 0x50 - Read int32 which is then shifted left 16 (0x10)
 			elif (pp == 0x50):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
-				operations.append(strat.readInt32LE() >> 0x10)
+				operations.append(strat.readInt32LE())
 				sz = strat.readInt8()
 				operations.append(strat.readBytes(sz).decode('latin-1'))
 			
@@ -596,11 +596,28 @@ def reevaluate(strat, tokens):
 		# Handle the arguments
 		match (command):
 			# Anything that needs one 16-bit number
-			case "PushPGVar" | "PushGVar" | "PushAVar":
+			case "PushPGVar" | "PushGVar" | "PushAVar" | "PushExternGlobal" | "PushValueFromIPAndOffset154":
 				strat.writeInt16LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
 			
+			# Anything that needs one 32-bit number
 			case "PushInt32":
 				strat.writeInt32LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
+			
+			# Asset load commands
+			case "LoadObject" | "LoadAsset0" | "LoadAnim" | "LoadAsset1" | "LoadAsset2" | "LoadSound" | "LoadAsset3" | "LoadAsset4" | "LoadAsset5":
+				# Need to write the command bit
+				strat.writeInt8(0x13)
+				
+				# We can take advantage of the fact that dict types were swapped
+				# internally but still have the same keys.
+				strat.writeInt8(EVALUATE_NAMES[0x13][command])
+				
+				# Now of course most are just an Int32 followed by a string, or
+				# really just a string since the int32 is always zero...
+				strat.writeInt32LE(tokens.expect(TokenType.NUMBER, f"Expecting number for {command}").data)
+				
+				if (command not in ["LoadAsset4", "LoadAsset5"]):
+					strat.writeString(tokens.expect(TokenType.STRING, f"Expecting resource name string for {command}").data, nul_terminated = (command in ["LoadObject", "LoadAsset0", "LoadAnim", "LoadAsset2"]))
 	
 	return
 
