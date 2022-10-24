@@ -29,6 +29,22 @@ def loadSpec(name):
 		new_opcodes[gSpec.opcodes[i][0]] = [i,] + newlist
 	
 	gSpec.opcodes = new_opcodes
+	
+	# Swap EVALUATE_NAMES
+	if (hasattr(gSpec, "EVALUATE_NAMES")):
+		new_evalname = {}
+		
+		for i in gSpec.EVALUATE_NAMES:
+			oldleft = i
+			oldright = gSpec.EVALUATE_NAMES[i]
+			
+			# Don't write these, they are special
+			if (oldright == None or type(oldright) == dict):
+				continue
+			
+			new_evalname[oldright] = oldleft
+		
+		gSpec.EVALUATE_NAMES = new_evalname
 
 class Instruction:
 	"""
@@ -153,48 +169,49 @@ def assemble(strat, tokens):
 			# Write opcode arguments, and handle any errors related to them.
 			i = 1
 			
-			while (i < len(gSpec.opcodes[op])):
-				arg_type = gSpec.opcodes[op][i]
-				
-				# print(f"\t{arg_type}")
-				
-				match (arg_type):
-					case 'int8' | 'int16' | 'int32':
-						number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
-						
-						if (type(number.data) == float):
-							# 20.12 and 4.12 fixed point number encode
-							number = int(number.data * 4096.0)
-						else:
-							number = int(number.data)
-						
-						match (arg_type):
-							case 'int8' : strat.writeInt8(number)
-							case 'int16': strat.writeInt16LE(number)
-							case 'int32': strat.writeInt32LE(number)
+			if ('varargs' not in gSpec.opcodes[op]):
+				while (i < len(gSpec.opcodes[op])):
+					arg_type = gSpec.opcodes[op][i]
 					
-					case 'address16' | 'offset16':
-						label = tokens.expect(TokenType.SYMBOL, f"{op} expects a label for {i}th argument.")
-						
-						# Add to patch table
-						rewrite_list.append({
-							"pos": strat.getPos(),
-							"label": label,
-							"relative": (True if (arg_type == "offset16") else False)
-						})
-						
-						# Just write zero for now
-						strat.writeInt16LE(0)
+					# print(f"\t{arg_type}")
 					
-					case 'varargs':
-						# Needs to be handled by spec
-						gSpec.revarargs(strat, tokens)
+					match (arg_type):
+						case 'int8' | 'int16' | 'int32':
+							number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
+							
+							if (type(number.data) == float):
+								# 20.12 and 4.12 fixed point number encode
+								number = int(number.data * 4096.0)
+							else:
+								number = int(number.data)
+							
+							match (arg_type):
+								case 'int8' : strat.writeInt8(number)
+								case 'int16': strat.writeInt16LE(number)
+								case 'int32': strat.writeInt32LE(number)
+						
+						case 'address16' | 'offset16':
+							label = tokens.expect(TokenType.SYMBOL, f"{op} expects a label for {i}th argument.")
+							
+							# Add to patch table
+							rewrite_list.append({
+								"pos": strat.getPos(),
+								"label": label.data,
+								"relative": (True if (arg_type == "offset16") else False)
+							})
+							
+							# Just write zero for now
+							strat.writeInt16LE(0)
+						
+						case 'eval':
+							# This will be handled by the spec
+							gSpec.reevaluate(strat, tokens)
 					
-					case 'eval':
-						# This will be handled by the spec
-						gSpec.reevaluate(strat, tokens)
-				
-				i += 1
+					i += 1
+			# If varargs is in the op types list, it's easier and probably
+			# simpler to have that take care of everything for us
+			else:
+				gSpec.revarargs(strat, tokens, op, rewrite_list)
 		
 		# Handle a label
 		elif (tokens.match(TokenType.SYMBOL)):

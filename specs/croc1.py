@@ -380,8 +380,7 @@ def unevaluate(strat):
 		# 0x03 - Load alien var (?)
 		elif (op == 0x03):
 			operations.append(Symbol(EVALUATE_NAMES[op]))
-			pp = strat.readInt16LE()
-			operations.append(pp)
+			operations.append(strat.readInt16LE())
 		
 		# 0x04 - Read a long value
 		elif (op == 0x04):
@@ -577,13 +576,31 @@ def reevaluate(strat, tokens):
 	
 	# We can just skip this for now...
 	
+	# Expect '{'
 	tokens.expect(TokenType.OPEN_BRACKET, "Got eval without opening brace")
 	
+	# Go through the tokens until we reach '}'
 	i = Token(TokenType.INVALID)
 	
 	while (i.kind != TokenType.CLOSE_BRACKET):
 		i = tokens.next()
-		# print(f"\t\t{i}")
+		
+		command = i.data
+		
+		# Write operation name if we recognise it
+		# Note that the 0x13 commands are special and will need to be written
+		# later
+		if (command in EVALUATE_NAMES):
+			strat.writeInt8(EVALUATE_NAMES[command])
+		
+		# Handle the arguments
+		match (command):
+			# Anything that needs one 16-bit number
+			case "PushPGVar" | "PushGVar" | "PushAVar":
+				strat.writeInt16LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
+			
+			case "PushInt32":
+				strat.writeInt32LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
 	
 	return
 
@@ -646,8 +663,92 @@ def varargs(strat, op, args, instructions):
 	
 	return []
 
-def revarargs(strat, tokens):
+def revarargs(strat, tokens, command, rewrite_list):
+	"""
+	Re-compiling of varargs. This starts at the token after instruction name,
+	so it takes a larger part in parsing the input
+	"""
 	
+	from tokeniser import TokenType, Token
+	
+	# print(command)
+	
+	if (command == "PlaySound"):
+		mode = tokens.expect(TokenType.NUMBER, "PlaySound expects a number.").data
+		
+		strat.writeInt8(mode)
+		
+		reevaluate(strat, tokens)
+		
+		if (mode == 2):
+			reevaluate(strat, tokens)
+		
+		elif (mode == 4):
+			reevaluate(strat, tokens)
+			reevaluate(strat, tokens)
+			reevaluate(strat, tokens)
+	
+	elif (command == "Switch"):
+		# The expression to match
+		reevaluate(strat, tokens)
+		
+		# Number of cases
+		num_cases = tokens.expect(TokenType.NUMBER, "Switch expects number of cases after expression to match.").data
+		
+		strat.writeInt16LE(num_cases)
+		
+		# Address for default case
+		rewrite_list.append({
+			"pos": strat.getPos(),
+			"label": tokens.expect(TokenType.SYMBOL, "Switch expects default case label after number of cases.").data,
+			"relative": True
+		})
+		
+		strat.writeInt16LE(0)
+		
+		for i in range(num_cases):
+			# Case label
+			rewrite_list.append({
+				"pos": strat.getPos(),
+				"label": tokens.expect(TokenType.SYMBOL, "Switch expects a case label.").data,
+				"relative": True
+			})
+			
+			strat.writeInt16LE(0)
+			
+			# Case expression to match
+			reevaluate(strat, tokens)
+	
+	elif (command == "Spawn"):
+		# IDK
+		strat.writeInt32LE(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
+		strat.writeInt16LE(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
+		strat.writeInt8(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
+		strat.writeInt8(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
+		num_evals = tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data
+		strat.writeInt8(num_evals)
+		strat.writeString(tokens.expect(TokenType.STRING, "Spawn expects a string.").data)
+		
+		for i in range(num_evals - 1):
+			reevaluate(strat, tokens)
+	
+	elif (command == "CreateTrigger"):
+		mode = tokens.expect(TokenType.NUMBER, "Create trigger expects a number as first argument.").data
+		
+		strat.writeInt8(mode)
+		
+		if (mode not in [0x1, 0x8, 0x9, 0xB]):
+			reevaluate(strat, tokens)
+		
+		strat.writeInt16LE(tokens.expect(TokenType.NUMBER, "Create trigger expects a number here.").data)
+	
+	elif (command == "Blink" or command == "CloseEyes"):
+		count = tokens.expect(TokenType.NUMBER, f"Expecting number with number of arguments for {command}").data
+		
+		strat.writeInt8(count)
+		
+		for i in range(count):
+			strat.writeInt16LE(tokens.expect(TokenType.NUMBER, f"{command} expects more numbers - did you include everything?").data)
 
 def after(op):
 	"""

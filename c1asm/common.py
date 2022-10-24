@@ -276,7 +276,7 @@ class BinaryWriteStream:
 		
 		self.writeBytes(b)
 	
-	def readString(self, string, nul_terminated = False):
+	def writeString(self, string, nul_terminated = False):
 		"""
 		Write a string, either with one byte having the length or as a NUL
 		terminated string.
