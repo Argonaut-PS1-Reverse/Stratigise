@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Strat ASM assembler
 """
@@ -33,7 +34,7 @@ def main(input, output):
 	f.setPos(0)
 	f.writeInt32LE(filesize - 4)
 	f.writeInt16LE(attr["audio_upper"])
-	f.writeInt16LE(end)
+	f.writeInt16LE(end - 4)
 
 if (__name__ == "__main__"):
 	if (len(sys.argv) == 3):

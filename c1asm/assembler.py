@@ -183,8 +183,6 @@ def assemble(strat, tokens):
 				while (i < len(gSpec.opcodes[op])):
 					arg_type = gSpec.opcodes[op][i]
 					
-					# print(f"\t{arg_type}")
-					
 					match (arg_type):
 						case 'int8' | 'int16' | 'int32':
 							number = tokens.expect(TokenType.NUMBER, f"{op} expects a number ({arg_type}) for {i}th argument.")
@@ -203,7 +201,7 @@ def assemble(strat, tokens):
 							rewrite_list.append({
 								"pos": strat.getPos(),
 								"label": label.data,
-								"relative": (True if (arg_type == "offset16") else False)
+								"relative": (arg_type == "offset16")
 							})
 							
 							# Just write zero for now
@@ -250,7 +248,7 @@ def assemble(strat, tokens):
 	
 	for r in rewrite_list:
 		strat.setPos(r["pos"])
-		strat.writeInt16LE((label_locations[r["label"]] - r["pos"] - 2) if (r["relative"]) else (label_locations[r["label"]] - 8))
+		strat.writeInt16LE((label_locations[r["label"]] - r["pos"] - 2) if (r["relative"]) else (label_locations[r["label"]] - 4))
 	
 	return end_pos, attributes
 

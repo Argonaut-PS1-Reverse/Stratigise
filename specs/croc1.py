@@ -718,7 +718,7 @@ def revarargs(strat, tokens, command, rewrite_list):
 		rewrite_list.append({
 			"pos": strat.getPos(),
 			"label": tokens.expect(TokenType.SYMBOL, "Switch expects default case label after number of cases.").data,
-			"relative": True
+			"relative": False
 		})
 		
 		strat.writeInt16LE(0)
@@ -728,7 +728,7 @@ def revarargs(strat, tokens, command, rewrite_list):
 			rewrite_list.append({
 				"pos": strat.getPos(),
 				"label": tokens.expect(TokenType.SYMBOL, "Switch expects a case label.").data,
-				"relative": True
+				"relative": False
 			})
 			
 			strat.writeInt16LE(0)
