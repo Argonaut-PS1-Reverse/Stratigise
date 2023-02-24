@@ -16,7 +16,13 @@ To disassemble a single strat, put it as `decompile.py`'s first argument:
 $ ./disassemble.py path/to/the/STRAT.BIN
 ```
 
-It will output a file with the original name plus the `.DIS` extension.
+It will output two files with the original name plus the `.DIS` and `.AXX` extensions.
+
+To reassemble a strat, use assemble with the first argument as the original strat name (witohut `.BIN`) and the second as the output bin file name:
+
+```zsh
+$ ./assemble.py path/to/the/INPUT.BIN path/to/the/OUTPUT.BIN
+```
 
 ### Example
 
