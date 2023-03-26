@@ -988,6 +988,8 @@ stRemoveFromMap
 stInitCrystal
 ```
 
+Initialises a crystal.
+
 ### `stCrystal`
 
 ```
@@ -999,6 +1001,8 @@ stCrystal
 ```
 stEndLevel
 ```
+
+Completes the level.
 
 ### `stStopDead`
 
@@ -1155,6 +1159,8 @@ stNoHang
 ```
 stVibrate [eval: ]
 ```
+
+> Note: May be related to controller vibration, or maybe camera shaking. Don't know right now.
 
 ### `stPlayerNoStood`
 
@@ -1318,11 +1324,15 @@ stFlashOff
 st_Light_0xd4 [eval: ]
 ```
 
+Only appears on the PC version, appears to be lighting related.
+
 ### `st_Light_0xd5`
 
 ```
 st_Light_0xd5 [eval: ]
 ```
+
+Only appears on the PC version, appears to be lighting related.
 
 ### `st_Light_0xd6`
 
@@ -1330,17 +1340,23 @@ st_Light_0xd5 [eval: ]
 st_Light_0xd6 [eval: ] [eval: ] [eval: ]
 ```
 
+Only appears on the PC version, appears to be lighting related.
+
 ### `stTonyTest`
 
 ```
 stTonyTest
 ```
 
+A test opcode with no arguments.
+
 ### `stLewisTest`
 
 ```
 stLewisTest [int8: ] [eval: ]
 ```
+
+A test opcode with test arguments.
 
 ## PC and PSX comparison
 
