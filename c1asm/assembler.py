@@ -250,7 +250,7 @@ def assemble(strat, tokens):
 		strat.setPos(r["pos"])
 		strat.writeInt16LE((label_locations[r["label"]] - r["pos"] - 2) if (r["relative"]) else (label_locations[r["label"]] - 4))
 	
-	return end_pos, attributes
+	return end_pos, attributes, label_locations
 
 if (__name__ == "__main__"):
 	import sys
