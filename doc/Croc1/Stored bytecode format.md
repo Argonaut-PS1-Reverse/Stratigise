@@ -8,15 +8,14 @@ The format as the bytecode is (seemingly) simple. There is a strat header, then 
 
 The strat header is:
 
-| Offset       | Size     | Purpose                   | Description and Notes |
-| ------------ | -------- | ------------------------- | --------------------- |
-| (1) `0x00`   | `0x04`   | `size` (`= FileSize - 8`) | The size of the strat stream, minus the header size. |
-| (2) `0x04`   | `0x01`   | Unknown                   | N/A, usually either `0x03` or `0x04`  |
-| (3) `0x05`   | `0x01`   | Unknown                   | N/A, always seems to be `0x00` |
-| (4) `0x06`   | `0x02`   | `audio_base_pointer`      | Absolute position in the file to the start of the audio data, minus four; alternately, relative position to audio data plus two |
-| =            | `0x08`   | | |
+| #   | Offset       | Size     | Purpose                   | Description and Notes |
+| --- | ------------ | -------- | ------------------------- | --------------------- |
+| 1   | `0x00`   | `0x04`   | `size` (`= FileSize - 8`) | The size of the strat stream, minus the header size. |
+| 2   | `0x04`   | `0x02`   | `entry_point`             | The entry point, relative to 0x4 offset in the binary.<sup>1</sup> |
+| 3   | `0x06`   | `0x02`   | `audio_base_pointer`      | Absolute position in the file to the start of the audio data, minus four; alternately, relative position to audio data plus two |
+|     | =            | `0x08`   | | |
 
-> 
+1. This only applies in some cases. If `stAddStrategy::base_memory /* param_2 */ == NULL`, then it is loaded from [???].
 
 ## Instructions
 
