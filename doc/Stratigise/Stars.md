@@ -20,7 +20,7 @@ function main()
     x = x + 2;
   end
   
-  cowhile (true) { -- executes one loop every frame
+  cowhile (true) do -- executes one loop every frame
     if (PAD_LEFT) then
       Turn(-1)
     elseif (PAD_RIGHT) then
