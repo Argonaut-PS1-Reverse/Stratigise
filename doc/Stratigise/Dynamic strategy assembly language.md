@@ -26,8 +26,6 @@ USED      -> '@' | ':' | '{' | '}'
 Symbol    -> ALPHA (IDENTCHR)*
 String    -> '"' (CHAR)* '"'
 Number    -> DIGIT (DIGIT)*
-Anyspace  -> (SPACE)*
-Varspace  -> SPACE (SPACE)*
 ```
 
 ## Grammar 
