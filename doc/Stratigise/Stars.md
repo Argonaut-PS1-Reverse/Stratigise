@@ -21,11 +21,11 @@ function main()
   end
   
   cowhile (true) { -- executes one loop every frame
-    if (Alien(PAD_LEFT)) then
+    if (PAD_LEFT) then
       Turn(-1)
-    elseif (Alien(PAD_RIGHT)) then
+    elseif (PAD_RIGHT) then
       Turn(1)
-    elseif (Alien(PAD_UP)) then
+    elseif (PAD_UP) then
       break
     end
   end
