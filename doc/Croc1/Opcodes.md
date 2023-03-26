@@ -203,7 +203,7 @@ stNext
 ### `stSwitch`
 
 ```
-stSwitch [eval: ] [int16: default] [address16: ] [varargs: ]
+stSwitch [eval: expression] [int16: cases_count] [address16: default] [varargs: ...]
 ```
 
 ### `stEndCase`
