@@ -8,13 +8,15 @@ The format as the bytecode is (seemingly) simple. There is a strat header, then 
 
 The strat header is:
 
-| Offset       | Size     | Purpose                  | Description and Notes |
-| ------------ | -------- | ------------------------ | --------------------- |
-| (1) `0x00`   | `0x04`   | `size`                   | The size of the strat stream, minus the header size. |
-| (2) `0x04`   | `0x01`   | `audio_base_pointer`     | Pointer to start of audio data. |
-| (3) `0x05`   | `0x01`   | Unknown                  | Always seems to be zero. |
-| (4) `0x06`   | `0x02`   | Unknown                  | Offset into the file of a different type of data, though not clear what it is; usually to these are the last few bytes of the file. |
+| Offset       | Size     | Purpose                   | Description and Notes |
+| ------------ | -------- | ------------------------- | --------------------- |
+| (1) `0x00`   | `0x04`   | `size` (`= FileSize - 8`) | The size of the strat stream, minus the header size. |
+| (2) `0x04`   | `0x01`   | Unknown                   | N/A, usually either `0x03` or `0x04`  |
+| (3) `0x05`   | `0x01`   | Unknown                   | N/A, always seems to be `0x00` |
+| (4) `0x06`   | `0x02`   | `audio_base_pointer`      | Absolute position in the file to the start of the audio data, minus four; alternately, relative position to audio data plus two |
 | =            | `0x08`   | | |
+
+> 
 
 ## Instructions
 
@@ -26,9 +28,14 @@ Bytecodes for the instructions are stored as one would expect. Each opcode is a 
 
 Is interpreted as `if (1) { goto (ip + 4); }`. The `If` is `15`; the opcode for `stIf`. Then, the arguments follow. `If` has a two arguments: one uses `stEvaluate` to read an arbitrary value which will be tested against, and a 16-bit little endian integer that will be used as an offset.
 
-| Byte(s)       | Meaning                                              |
-| ------------- | ---------------------------------------------------- |
-
+| Part    | Byte(s)       | Meaning                                              |
+| ------- | ------------- | ---------------------------------------------------- |
+| Opcode  | `15`          | `stIf` opcode                                        |
+|         |               | Expect: &lt;eval statement&gt; &lt;offset&gt;        |
+| Eval    | `04`          | Push number to the top of the eval stack             |
+| Eval    | `01 00 00 00` | Number to push                                       |
+| Eval    | `12`          | Return the value on the top of the stack             |
+| Offset  | `04 00`       | Offset to jump to                                    |
 
 To see a list of opcodes throughout various versions of *Croc: Legend of the Gobbos*, see [Opcodes.md](Opcodes.md).
 
