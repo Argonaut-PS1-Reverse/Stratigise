@@ -15,7 +15,7 @@ The strat header is:
 | 3   | `0x06`   | `0x02`   | `audio_base_pointer`      | Absolute position in the file to the start of the audio data, minus four; alternately, relative position to audio data plus two |
 |     | =            | `0x08`   | | |
 
-1. This is only used when the strat isn't being preloaded. If `stAddStrategy::base_memory /* param_2 */ == NULL`, then it is loaded from `gdata/strats.wad@STRUN.BIN` (PC) or a file in `WADS/EXCLUDES.WAD` (PSX). See [`libcroc/strundef.h`](https://github.com/vs49688/CrocUtils/blob/824b4e6a4f689ed91d6c63c4a4b6e675bcca49bc/libcroc/include/libcroc/strundef.h#LL31C17-L31C17) and [`Strun.md`](Strun.md).
+1. This is only used when the strat isn't being preloaded. If the memory for the BIN file isn't provided to `stAddStrategy`, then the program counter value loaded from `STRUN.BIN` (PC non-DE), `croc.db` at table `StratIndex` (PC DE) or somewhere in `WADS/EXCLUDES.WAD` (PSX, similar to `STRUN.BIN`). See [`libcroc/strundef.h`](https://github.com/vs49688/CrocUtils/blob/824b4e6a4f689ed91d6c63c4a4b6e675bcca49bc/libcroc/include/libcroc/strundef.h#LL31C17-L31C17) and [`Strun.md`](Strun.md).
 
 ## Instructions
 
