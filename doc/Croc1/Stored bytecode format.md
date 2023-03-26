@@ -15,7 +15,7 @@ The strat header is:
 | 3   | `0x06`   | `0x02`   | `audio_base_pointer`      | Absolute position in the file to the start of the audio data, minus four; alternately, relative position to audio data plus two |
 |     | =            | `0x08`   | | |
 
-1. This only applies in some cases. If `stAddStrategy::base_memory /* param_2 */ == NULL`, then it is loaded from [???].
+1. This only applies in some cases. If `stAddStrategy::base_memory /* param_2 */ == NULL`, then it is loaded from somewhere around `WADS/EXCLUDES.WAD`<sub>(PSX)</sub> or (not currently known)<sub>(PC/Croc DE)</sub>.
 
 ## Instructions
 
