@@ -146,13 +146,10 @@ class StratInstructionList:
 		
 		f.close()
 
-def disassemble(path, strat, section_info):
+def disassemble(path, strat, section_info, instructions):
 	"""
 	Does disassembly for code segments
 	"""
-	
-	# Create instructions list
-	instructions = StratInstructionList()
 	
 	# File header
 	header = f"; disassembly using stratigise\n\n"
@@ -221,7 +218,7 @@ def disassemble(path, strat, section_info):
 	
 	instructions.writeFile(path + section_info.extension)
 
-def handle_data(path, strat, section_info):
+def handle_data(path, strat, section_info, instructions):
 	Path(path + section_info.extension).write_bytes(strat.readBytes(section_info.length) or b"")
 
 SECTION_HANDLERS = {
@@ -234,17 +231,22 @@ def process(path):
 	Process a strat
 	"""
 	
+	# Create a binary read stream
 	strat = BinaryReadStream(path)
+	
+	# HACK Create instructions list
+	# For now I've moved this here so we can create labels from the processSections function
+	instructions = StratInstructionList()
 	
 	# Read strat headers and get sections
 	sections = []
 	
 	if (hasattr(gSpec, "processSections")):
-		sections += gSpec.processSections(strat)
+		sections += gSpec.processSections(strat, instructions)
 	else:
 		print("Error: Spec must have processSections in order to disassemble and read data.")
 		return
 	
 	for s in sections:
 		strat.setPos(s.start)
-		(SECTION_HANDLERS[s.type])(path, strat, s)
+		(SECTION_HANDLERS[s.type])(path, strat, s, instructions)

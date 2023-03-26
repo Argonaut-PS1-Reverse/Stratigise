@@ -18,13 +18,23 @@ class BinaryReadStream:
 		"""
 		Open the file at the given path
 		"""
+		
+		self.name = path
 		self.file = open(path, "rb")
 	
 	def __del__(self):
 		"""
 		Close the file assocaited with the stream
 		"""
+		
 		self.file.close()
+	
+	def getPath(self):
+		"""
+		Get the file's path
+		"""
+		
+		return self.name
 	
 	def getPos(self):
 		"""

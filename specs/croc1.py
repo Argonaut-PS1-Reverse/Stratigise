@@ -11,20 +11,53 @@ def readOpcode(strat):
 """
 Processes the section data
 """
-def processSections(strat):
+def processSections(strat, instr):
 	from stratigise.common import SectionInfo
 	
 	# Read size of strat, audio upper number and audio start position
 	size = strat.readInt32LE()
-	audio_upper = strat.readInt16LE()
+	entry = strat.readInt16LE()
 	audio_start = strat.readInt16LE()
 	
 	# Find sizes
 	audio_size = size - audio_start
 	code_size = size - audio_size - 4
 	
+	# Info that will be passed to code section
+	info = {"entry": entry}
+	
+	# STRUN.BIN or croc.db strat info
+	from os.path import exists, split
+	
+	filedir, filename = split(strat.getPath())
+	filename = filename.split(".")[0] # Remove extension
+	strats_csv = f"{filedir}/Strats.csv"
+	count = 0
+	
+	if (exists(strats_csv)):
+		import csv
+		
+		with open(strats_csv, newline = "") as f:
+			data = csv.DictReader(f)
+			
+			for entry in data:
+				if (entry['file_name'] == filename):
+					info[f"strat{count}_name"] = entry['name']
+					info[f"strat{count}_vars"] = entry['var_size']
+					addr = int(entry['pc']) + 4
+					info[f"strat{count}_pc"] = "Label_" + hex(addr)[2:]
+					
+					# HACK to add the label
+					instr.addLabel(addr)
+					
+					count += 1
+		
+		print(f"Info: Found {count} strat(s) in {filename}.")
+	else:
+		print("Warning: specs/croc1: Strats.csv not found, won't be able to provide strat entry locations. If you modify the strat before the last strat entry point and the size/entry point locations is not exactly the same in the resulting binary then your strat will crash or not work properly.")
+	
 	return [
-		SectionInfo('code', 8, code_size, ".DIS", params = {"original_size": size, "original_audio_start": audio_start, "audio_upper": audio_upper}),
+		SectionInfo('code', 8, code_size, ".DIS", params = info),
 		SectionInfo('data', 8 + code_size, audio_size + 4, ".AXX"),
 	]
 
