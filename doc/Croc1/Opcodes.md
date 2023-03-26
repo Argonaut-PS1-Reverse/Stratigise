@@ -54,11 +54,15 @@ stTurnTowardWaypointX [eval: ]
 stPlaySound [int8: ] [eval: ] [varargs: ]
 ```
 
+Starts playing a sound.
+
 ### `stStopSound`
 
 ```
 stStopSound [eval: ]
 ```
+
+Stops playing a sound.
 
 ### `stPlayAnim`
 
@@ -113,7 +117,7 @@ stUntil [eval: ]
 ### `stWhile`
 
 ```
-stWhile [eval: ] [int16: ]
+stWhile [eval: condition] [int16: goto_after]
 ```
 
 ### `stEndWhile`
@@ -125,10 +129,10 @@ stEndWhile
 ### `stIf`
 
 ```
-stIf [stEvaluate: expression] [int16: offset]
+stIf [eval: condition] [int16: offset]
 ```
 
-If `expression` is equal to `0`, then jump `offset` bytes ahead. `offset` is relative to the instruction after the current `stIf` instruction.
+If `condition` is equal to `0`, then jump `offset` bytes ahead. `offset` is relative to the instruction after the current `stIf` instruction.
 
 ```c
 void stIf(stStrat *strat) {
@@ -199,7 +203,7 @@ stNext
 ### `stSwitch`
 
 ```
-stSwitch [eval: ] [int16: ] [address16: ] [varargs: ]
+stSwitch [eval: ] [int16: default] [address16: ] [varargs: ]
 ```
 
 ### `stEndCase`
