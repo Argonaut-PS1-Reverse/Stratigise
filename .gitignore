@@ -2,3 +2,6 @@
 *.AXX
 *.ASF
 **/__pycache__
+openstrat/source/util
+openstrat/temp
+openstrat/build
