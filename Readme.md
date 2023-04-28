@@ -1,12 +1,16 @@
-# ASL Strategy Dissassembler
+# Stratigise: Argonaut Strategy Language Reverse Engineering and Tools
 
-> **Important**
-> 
-> This project does not always produce vaild disassemblies at time of writing. If you see `CommandError`, `__unknown_operation_0x`[...] or anything suspicous, that means something went wrong and you can't trust anything written after or slightly before that instruction.
-
-This is a work-in-progress assembler and dissassembler meant to aid in understanding what strats are doing in games created by Argonaut Games.
+This is a work-in-progress assembler and dissassembler meant to aid in understanding what strats are doing in games created by Argonaut Games. There is a general bias towards the first *Croc: Legend of the Gobbos*, but we welcome contributions that benefit any game.
 
 It is not currently meant for serious use.
+
+Argonaut PSX reversing Discord: [![Discord](https://img.shields.io/discord/1013732315186335764?label=Join%20our%20Discord%20%21&logo=discord)](https://discord.gg/feMkSQeFms)
+
+## Disclaimer(s)
+
+> **Warning**: This project does not always produce vaild disassemblies at time of writing. If you see `CommandError`, `__unknown_operation_0x`[...] or anything suspicous, that means something went wrong and you can't trust anything written after or slightly before that instruction.
+
+> **Note**: Our reassembler is currently only designed to handle Croc 1 and is in general quite messy code. In fact, the entire project is quite messy.
 
 ## Usage
 
