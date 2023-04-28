@@ -2,7 +2,15 @@
 
 This document attempts to note the format of the compiled bytecode files in Croc 1.
 
-The format as the bytecode is (seemingly) simple. There is a strat header, then each opcode is stored in a single byte followed by its arguments.
+> **Note**: If you do not have prior exprience with bytecodes, please do some reading as it's not explained in this document!
+
+## Overview
+
+The binary file consists of three parts: the header, the code and some undocumented data which might be related to audio.
+
+Stratigies are effectively "objects with scripts". Some of the original developers that were at Argonaut have said that they called "basically anything that moves" a strat.
+
+A single strategy binary may contain multipule stratigies. The addresses for the main functions of these stratigies is stored in a special file, varying by the exact version of the game you are playing.
 
 ## Header
 
@@ -11,13 +19,13 @@ The strat header is:
 | #   | Offset       | Size     | Purpose                   | Description and Notes |
 | --- | ------------ | -------- | ------------------------- | --------------------- |
 | 1   | `0x00`   | `0x04`   | `size` (`= FileSize - 8`) | The size of the strat stream, minus the header size. |
-| 2   | `0x04`   | `0x02`   | `entry_point`             | The entry point, relative to 0x4 offset in the binary.<sup>1</sup> |
+| 2   | `0x04`   | `0x02`   | `entry_point`             | The main entry point, relative to 0x4 offset in the binary.<sup>1</sup> |
 | 3   | `0x06`   | `0x02`   | `audio_base_pointer`      | Absolute position in the file to the start of the audio data, minus four; alternately, relative position to audio data plus two |
 |     | =            | `0x08`   | | |
 
 1. This is only used when the strat isn't being preloaded. If the memory for the BIN file isn't provided to `stAddStrategy`, then the program counter value loaded from `STRUN.BIN` (PC non-DE), `croc.db` at table `StratIndex` (PC DE) or somewhere in `WADS/EXCLUDES.WAD` (PSX, similar to `STRUN.BIN`). See [`libcroc/strundef.h`](https://github.com/vs49688/CrocUtils/blob/824b4e6a4f689ed91d6c63c4a4b6e675bcca49bc/libcroc/include/libcroc/strundef.h#LL31C17-L31C17) and [`Strun.md`](Strun.md).
 
-## Instructions
+## Code
 
 Bytecodes for the instructions are stored as one would expect. Each opcode is a single byte, followed by arguments for that instruction. For example:
 
