@@ -121,7 +121,7 @@ opcodes = {
 	0x2E: ['TiltRight', 'eval'],
 	0x2F: ['TiltLeft', 'eval'],
 	0x30: ['Spawn', 'int32', 'int16', 'int8', 'int8', 'int8', 'varargs'],
-	0x31: ['CreateTrigger', 'int8', 'varargs', 'int16'],
+	0x31: ['CreateTrigger', 'int8', 'varargs', 'address16'],
 	0x32: ['KillTrigger', 'int16'], # hcf
 	0x33: ['CommandError'],
 	0x34: ['EndTrigger'],
@@ -372,7 +372,7 @@ EVALUATE_NAMES = {
 	0x1A: "FloorNumber",
 	0x1B: "PlayerIsWithinRadius2D",
 	0x1C: "PushExternGlobal",
-	0x1D: "PushValueFromIPAndOffset154",
+	0x1D: "PushStratVar",
 	0x1E: "Negate",
 	0x1F: "IsZero",
 	0x20: "TopPairNotZero",
@@ -629,7 +629,7 @@ def reevaluate(strat, tokens):
 		# Handle the arguments
 		match (command):
 			# Anything that needs one 16-bit number
-			case "PushPGVar" | "PushGVar" | "PushAVar" | "PushExternGlobal" | "PushValueFromIPAndOffset154":
+			case "PushPGVar" | "PushGVar" | "PushAVar" | "PushExternGlobal" | "PushStratVar":
 				strat.writeInt16LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
 			
 			# Anything that needs one 32-bit number
@@ -790,7 +790,15 @@ def revarargs(strat, tokens, command, rewrite_list):
 		if (mode not in [0x1, 0x8, 0x9, 0xB]):
 			reevaluate(strat, tokens)
 		
-		strat.writeInt16LE(tokens.expect(TokenType.NUMBER, "Create trigger expects a number here.").data)
+		# strat.writeInt16LE(tokens.expect(TokenType.NUMBER, "Create trigger expects a number here.").data)
+		# Case label
+		rewrite_list.append({
+			"pos": strat.getPos(),
+			"label": tokens.expect(TokenType.SYMBOL, "CreateTrigger expects a case label.").data,
+			"relative": False
+		})
+		
+		strat.writeInt16LE(0)
 	
 	elif (command == "Blink" or command == "CloseEyes"):
 		count = tokens.expect(TokenType.NUMBER, f"Expecting number with number of arguments for {command}").data
