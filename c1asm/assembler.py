@@ -150,6 +150,9 @@ def assemble(strat, tokens):
 	
 	# To make things easier we will also keep track of where labels are
 	label_locations = {}
+
+	# Locations of resource name strings have to be written in last section
+	string_locations = []
 	
 	# Also we should read attributes :)
 	attributes = {}
@@ -209,13 +212,13 @@ def assemble(strat, tokens):
 						
 						case 'eval':
 							# This will be handled by the spec
-							gSpec.reevaluate(strat, tokens)
+							gSpec.reevaluate(strat, tokens, string_locations)
 					
 					i += 1
 			# If varargs is in the op types list, it's easier and probably
 			# simpler to have that take care of everything for us
 			else:
-				gSpec.revarargs(strat, tokens, op, rewrite_list)
+				gSpec.revarargs(strat, tokens, op, rewrite_list, string_locations)
 		
 		# Handle a label
 		elif (tokens.match(TokenType.SYMBOL)):
@@ -249,8 +252,22 @@ def assemble(strat, tokens):
 	for r in rewrite_list:
 		strat.setPos(r["pos"])
 		strat.writeInt16LE((label_locations[r["label"]] - r["pos"] - 2) if (r["relative"]) else (label_locations[r["label"]] - 4))
+
+	strat.setPos(end_pos)
+
+	write_string_locations(strat, string_locations)
+
+	# Last 4 (unused?) bytes
+	strat.writeInt32LE(2024)
 	
 	return end_pos, attributes, label_locations
+
+def write_string_locations(strat, string_locations):
+	strat.writeInt16LE(len(string_locations))
+
+	for loc in string_locations:
+		strat.writeInt8(loc["kind"])
+		strat.writeInt16LE(loc["offset"])
 
 if (__name__ == "__main__"):
 	import sys

@@ -206,6 +206,8 @@ def disassemble(path, strat, section_info, instructions):
 						args.append(gSpec.unevaluate(strat))
 					elif (type == 'varargs'):
 						args += gSpec.varargs(strat, opcode, args, instructions)
+					elif (type == 'placeholder64'):
+						strat.readBytes(8)
 					else:
 						pass
 			
