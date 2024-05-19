@@ -120,7 +120,7 @@ opcodes = {
 	0x2D: ['TiltForward', 'eval'],
 	0x2E: ['TiltRight', 'eval'],
 	0x2F: ['TiltLeft', 'eval'],
-	0x30: ['Spawn', 'placeholder64', 'int8', 'string', 'varargs'],
+	0x30: ['Spawn', 'placeholder64', 'int8', 'varargs'],
 	0x31: ['CreateTrigger', 'int8', 'varargs', 'address16'],
 	0x32: ['KillTrigger', 'int16'], # hcf
 	0x33: ['CommandError'],
