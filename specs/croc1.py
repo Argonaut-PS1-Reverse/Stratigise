@@ -91,7 +91,7 @@ opcodes = {
 	0x10: ['Wait', 'eval'],
 	0x11: ['Repeat'],
 	0x12: ['Until', 'eval'],
-	0x13: ['While', 'eval', 'int16'],
+	0x13: ['While', 'eval', 'offset16'],
 	0x14: ['EndWhile'],
 	0x15: ['If', 'eval', 'offset16'],
 	0x16: ['Else', 'offset16'],
@@ -120,7 +120,7 @@ opcodes = {
 	0x2D: ['TiltForward', 'eval'],
 	0x2E: ['TiltRight', 'eval'],
 	0x2F: ['TiltLeft', 'eval'],
-	0x30: ['Spawn', 'int32', 'int16', 'int8', 'int8', 'int8', 'varargs'],
+	0x30: ['Spawn', 'placeholder64', 'int8', 'varargs'],
 	0x31: ['CreateTrigger', 'int8', 'varargs', 'address16'],
 	0x32: ['KillTrigger', 'int16'], # hcf
 	0x33: ['CommandError'],
@@ -176,7 +176,7 @@ opcodes = {
 	0x65: ['SetAnimSpeed', 'eval'],
 	0x66: ['SetCamDist', 'eval'],
 	0x67: ['UserTrigger', 'int16', 'eval'],
-	0x68: ['WaitEvent'],
+	0x68: ['WaitEvent', 'int8'],
 	0x69: ['PlayerCollisionOn'],
 	0x6A: ['AnimCtrlSpdOn'],
 	0x6B: ['AnimCtrlSpdOff'],
@@ -350,8 +350,8 @@ EVALUATE_NAMES = {
 	0x0D: "NotEqual",
 	0x0E: "TopLess",
 	0x0F: "TopGreater",
-	0x10: "TopNotLess",
-	0x11: "TopNotGreater",
+	0x10: "TopNotGreater",
+	0x11: "TopNotLess",
 	0x12: "ReturnTop",
 	0x13: {
 		0x01: "LoadObject",
@@ -380,6 +380,18 @@ EVALUATE_NAMES = {
 	0x22: "DistanceFromPoint",
 	0x23: "CheckAnimFlag32",
 	0x26: "ReturnZero",
+}
+
+STRING_KINDS = {
+	"Spawn": 1,
+	"LoadObject": 2,
+	"LoadAsset0": None, # TODO
+	"LoadAnim": 4,
+	"LoadAsset1": 3,
+	"LoadAsset2": None, # TODO
+	"LoadAsset3": None, # TODO
+	"LoadAsset4": None, # TODO
+	"LoadAsset5": None, # TODO
 }
 
 def unevaluate(strat):
@@ -480,14 +492,14 @@ def unevaluate(strat):
 			# 0x01, 0x02 - These try to find if the asset is already loaded in memory first
 			if (pp == 0x01 or pp == 0x02):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
-				operations.append(strat.readInt32LE())
+				strat.readInt32LE() # placeholder
 				strat.readInt8() # ignore value
 				operations.append(strat.readString())
 			
 			# 0x03, 0x04, 0x05 - These just seem to directly load the asset
 			elif (pp == 0x03 or pp == 0x04 or pp == 0x05):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
-				operations.append(strat.readInt32LE())
+				strat.readInt32LE() # placeholder
 				sz = strat.readInt8()
 				operations.append(strat.readBytes(sz).decode('latin-1').replace('\x00', ''))
 			
@@ -509,7 +521,7 @@ def unevaluate(strat):
 			# 0x50 - Read int32 which is then shifted left 16 (0x10)
 			elif (pp == 0x50):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
-				operations.append(strat.readInt32LE())
+				strat.readInt32LE() # placeholder
 				sz = strat.readInt8()
 				operations.append(strat.readBytes(sz).decode('latin-1'))
 			
@@ -518,7 +530,7 @@ def unevaluate(strat):
 			# like most things here seem to do...
 			elif (pp == 0x51 or pp == 0x8E):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
-				operations.append(strat.readInt32LE())
+				strat.readInt32LE() # placeholder
 		
 		# NOTE: Assume the following math functions replace the top of the stack
 		# with their resulting value unless otherwise noted.
@@ -600,7 +612,7 @@ def unevaluate(strat):
 	
 	return operations
 
-def reevaluate(strat, tokens):
+def reevaluate(strat, tokens, string_locations):
 	"""
 	Croc 1 style evaluate handling when compiling
 	"""
@@ -637,7 +649,7 @@ def reevaluate(strat, tokens):
 				strat.writeInt32LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
 			
 			# Asset load commands
-			case "LoadObject" | "LoadAsset0" | "LoadAnim" | "LoadAsset1" | "LoadAsset2" | "LoadSound" | "LoadAsset3" | "LoadAsset4" | "LoadAsset5":
+			case "LoadObject" | "LoadAsset0" | "LoadAnim" | "LoadAsset1" | "LoadAsset2" | "LoadAsset3" | "LoadAsset4" | "LoadAsset5":
 				# Need to write the command bit
 				strat.writeInt8(0x13)
 				
@@ -645,12 +657,26 @@ def reevaluate(strat, tokens):
 				# internally but still have the same keys.
 				strat.writeInt8(EVALUATE_NAMES[0x13][command])
 				
-				# Now of course most are just an Int32 followed by a string, or
-				# really just a string since the int32 is always zero...
-				strat.writeInt32LE(tokens.expect(TokenType.NUMBER, f"Expecting number for {command}").data)
+				# Now of course most are just a zero 32bit placeholder followed by a string
+				strat.writeInt32LE(0)
+				string_locations.append({"kind": STRING_KINDS[command], "offset": strat.getPos() - 4})
 				
-				if (command not in ["LoadAsset4", "LoadAsset5"]):
-					strat.writeString(tokens.expect(TokenType.STRING, f"Expecting resource name string for {command}").data, nul_terminated = (command in ["LoadObject", "LoadAsset0", "LoadAnim", "LoadAsset2"]))
+				strat.writeString(tokens.expect(TokenType.STRING, f"Expecting resource name string for {command}").data, nul_terminated = (command in ["LoadObject", "LoadAsset0", "LoadAnim", "LoadAsset2"]))
+
+			case "LoadSound":
+				# Need to write the command bit
+				strat.writeInt8(0x13)
+
+				# We can take advantage of the fact that dict types were swapped
+				# internally but still have the same keys.
+				strat.writeInt8(EVALUATE_NAMES[0x13][command])
+
+				num_args = tokens.expect(TokenType.NUMBER, f"Expecting number for {command}").data
+
+				strat.writeInt8(num_args)
+
+				for _ in range(num_args):
+					reevaluate(strat, tokens, string_locations)
 	
 	return
 
@@ -692,7 +718,7 @@ def varargs(strat, op, args, instructions):
 		# something else should go here probably
 		
 		# Read evals
-		for i in range(args[4] - 1):
+		for i in range(args[0] - 1):
 			args.append(unevaluate(strat))
 	
 	# Create trigger
@@ -713,7 +739,7 @@ def varargs(strat, op, args, instructions):
 	
 	return []
 
-def revarargs(strat, tokens, command, rewrite_list):
+def revarargs(strat, tokens, command, rewrite_list, string_locations):
 	"""
 	Re-compiling of varargs. This starts at the token after instruction name,
 	so it takes a larger part in parsing the input
@@ -728,19 +754,19 @@ def revarargs(strat, tokens, command, rewrite_list):
 		
 		strat.writeInt8(mode)
 		
-		reevaluate(strat, tokens)
+		reevaluate(strat, tokens, string_locations)
 		
 		if (mode == 2):
-			reevaluate(strat, tokens)
+			reevaluate(strat, tokens, string_locations)
 		
 		elif (mode == 4):
-			reevaluate(strat, tokens)
-			reevaluate(strat, tokens)
-			reevaluate(strat, tokens)
+			reevaluate(strat, tokens, string_locations)
+			reevaluate(strat, tokens, string_locations)
+			reevaluate(strat, tokens, string_locations)
 	
 	elif (command == "Switch"):
 		# The expression to match
-		reevaluate(strat, tokens)
+		reevaluate(strat, tokens, string_locations)
 		
 		# Number of cases
 		num_cases = tokens.expect(TokenType.NUMBER, "Switch expects number of cases after expression to match.").data
@@ -767,20 +793,21 @@ def revarargs(strat, tokens, command, rewrite_list):
 			strat.writeInt16LE(0)
 			
 			# Case expression to match
-			reevaluate(strat, tokens)
+			reevaluate(strat, tokens, string_locations)
 	
 	elif (command == "Spawn"):
-		# IDK
-		strat.writeInt32LE(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
-		strat.writeInt16LE(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
-		strat.writeInt8(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
-		strat.writeInt8(tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data)
+		# Placeholders
+		strat.writeInt32LE(0)
+		strat.writeInt32LE(0)
+
 		num_evals = tokens.expect(TokenType.NUMBER, "Spawn expects a number.").data
 		strat.writeInt8(num_evals)
+
+		string_locations.append({"kind": STRING_KINDS[command], "offset": strat.getPos() - 4})
 		strat.writeString(tokens.expect(TokenType.STRING, "Spawn expects a string.").data)
 		
 		for i in range(num_evals - 1):
-			reevaluate(strat, tokens)
+			reevaluate(strat, tokens, string_locations)
 	
 	elif (command == "CreateTrigger"):
 		mode = tokens.expect(TokenType.NUMBER, "Create trigger expects a number as first argument.").data
@@ -788,7 +815,7 @@ def revarargs(strat, tokens, command, rewrite_list):
 		strat.writeInt8(mode)
 		
 		if (mode not in [0x1, 0x8, 0x9, 0xB]):
-			reevaluate(strat, tokens)
+			reevaluate(strat, tokens, string_locations)
 		
 		# strat.writeInt16LE(tokens.expect(TokenType.NUMBER, "Create trigger expects a number here.").data)
 		# Case label

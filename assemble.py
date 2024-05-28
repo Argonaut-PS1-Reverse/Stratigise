@@ -20,7 +20,7 @@ def main(input, output):
 	f.writeInt32LE(0)
 	
 	# Tokenise and assemble
-	end, attr, labels = assembler.assemble(f, tokeniser.tokenise(input + ".DIS"))
+	end, attr, labels = assembler.assemble(f, tokeniser.tokenise(input))
 	
 	# Collect info about strats
 	strat_info = {}
@@ -53,12 +53,6 @@ def main(input, output):
 	print("*" * 80)
 	print()
 	
-	# Write audio data
-	filesize = f.getLength()
-	f.setPos(filesize)
-	
-	f.writeBytes(Path(input + ".AXX").read_bytes())
-	
 	filesize = f.getPos()
 	
 	# Write real header
@@ -71,4 +65,5 @@ if (__name__ == "__main__"):
 	if (len(sys.argv) == 3):
 		main(sys.argv[1], sys.argv[2])
 	else:
-		print(f"Usage: {sys.argv[0]} [base file name, DIS and AXX pair] [output strat name]")
+		print("Usage:")
+		print(f"    {sys.argv[0]} [DIS file name] [output strat name]")
