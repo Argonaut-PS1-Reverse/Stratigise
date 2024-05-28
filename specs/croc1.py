@@ -350,8 +350,8 @@ EVALUATE_NAMES = {
 	0x0D: "NotEqual",
 	0x0E: "TopLess",
 	0x0F: "TopGreater",
-	0x10: "TopNotLess",
-	0x11: "TopNotGreater",
+	0x10: "TopNotGreater",
+	0x11: "TopNotLess",
 	0x12: "ReturnTop",
 	0x13: {
 		0x01: "LoadObject",
