@@ -41,12 +41,20 @@ def main(input, output):
 	# Print out label physical locations
 	print()
 	print("*" * 80)
-	print("STRUN.BIN/croc.db might need to be updated, if you have modified the strat in such a way that the entry point addresses have changed.")
+	print("STRUN.BIN/croc.db might need to be updated, if you have modified the strat in such a way that the entry point addresses or numbers of used global variables have changed.")
 	print("To update croc.db (for Definitive Edition) you need to open croc.db at table StratIndex in database browsing software and run the following:")
 	print()
 	
+	failed_strats = []
 	for s in strat_info:
-		print(f"UPDATE StratIndex SET pc = {labels[strat_info[s]['pc']] - 4} WHERE name = '{strat_info[s]['name']}';")
+		if strat_info[s]['pc'] in labels:
+			print(f"UPDATE StratIndex SET pc = {labels[strat_info[s]['pc']] - 4}, var_size = {strat_info[s]['vars']} WHERE name = '{strat_info[s]['name']}';")
+		else:
+			failed_strats.append(strat_info[s]['name'])
+
+	if len(failed_strats) > 0:
+		print()
+		print("WARNING!!!: No matching labels for strats: " + ", ".join(failed_strats))
 	
 	print()
 	print("Right now there is no way to edit STRUN.BIN unless you have a hexeditor and know the format.")

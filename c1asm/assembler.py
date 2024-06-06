@@ -156,6 +156,9 @@ def assemble(strat, tokens):
 	
 	# Also we should read attributes :)
 	attributes = {}
+
+	# Strats to be preloaded
+	preloads = []
 	
 	###############################
 	# First Pass - Assemble strat
@@ -213,6 +216,11 @@ def assemble(strat, tokens):
 						case 'eval':
 							# This will be handled by the spec
 							gSpec.reevaluate(strat, tokens, string_locations)
+
+						case 'string':
+							string = tokens.expect(TokenType.STRING, f"{op} expects a string for {i}th argument.")
+
+							strat.writeString(string.data, True, False)
 					
 					i += 1
 			# If varargs is in the op types list, it's easier and probably
@@ -236,7 +244,13 @@ def assemble(strat, tokens):
 			attr_name = tokens.expect(TokenType.SYMBOL, "Did not find symbol after attribute.").data
 			
 			# Get the attribute value
-			attributes[attr_name] = tokens.next().data
+			value = tokens.next().data
+
+			if attr_name == "preload":
+				if value not in preloads:
+					preloads.append(value)
+			else:
+				attributes[attr_name] = value
 		
 		# Error condition
 		else:
@@ -255,17 +269,24 @@ def assemble(strat, tokens):
 
 	strat.setPos(end_pos)
 
-	write_string_locations(strat, string_locations)
+	write_string_locations(strat, string_locations, preloads)
 
 	# Last 4 (unused?) bytes
 	strat.writeInt32LE(2024)
 	
 	return end_pos, attributes, label_locations
 
-def write_string_locations(strat, string_locations):
-	strat.writeInt16LE(len(string_locations))
+def write_string_locations(strat, string_locations, preloads):
+	strat.writeInt16LE(len(string_locations) + len(preloads))
+
+	for preload in preloads:
+		strat.writeInt8(0)
+		strat.writeString(preload, True, False)
 
 	for loc in string_locations:
+		if loc["kind"] is None:
+			print(f"WARNING: unknown kind for string at {hex(loc['offset'])}")
+
 		strat.writeInt8(loc["kind"])
 		strat.writeInt16LE(loc["offset"])
 

@@ -95,6 +95,7 @@ class StratInstructionList:
 		"""
 		
 		self.preamble = "" if type(preamble) != str else preamble
+		self.add_preamble = ""
 		self.stream = []
 		self.labels = []
 	
@@ -104,6 +105,13 @@ class StratInstructionList:
 		"""
 		
 		self.preamble = preamble
+
+	def appendPreamble(self, add_preamble):
+		"""
+		Append string to the preamble
+		"""
+		
+		self.add_preamble += add_preamble
 	
 	def addInstruction(self, instruction):
 		"""
@@ -137,6 +145,7 @@ class StratInstructionList:
 		f = open(path, "w")
 		
 		f.write(self.preamble)
+		f.write(self.add_preamble)
 		
 		for s in self.stream:
 			if (s.location in self.labels):
@@ -183,7 +192,7 @@ def disassemble(path, strat, section_info, instructions):
 					
 					# Based on the type, get the next value from the instruction stream appropraitely
 					if (type == 'string'):
-						args.append(strat.readString())
+						args.append(strat.readBytes(strat.readInt8()).decode('latin-1').replace('\x00', ''))
 					elif (type == 'int32'):
 						args.append(strat.readInt32LE())
 					elif (type == 'offset32'):
@@ -206,8 +215,17 @@ def disassemble(path, strat, section_info, instructions):
 						args.append(gSpec.unevaluate(strat))
 					elif (type == 'varargs'):
 						args += gSpec.varargs(strat, opcode, args, instructions)
-					elif (type == 'placeholder64'):
-						strat.readBytes(8)
+					elif (type == 'placeholder32_64'):
+						strat.readInt32LE()
+						value = strat.readInt32LE()
+						# can be 32-bit in some strats
+						if value != 0:
+							strat.setPos(strat.getPos() - 4)
+					elif (type == 'placeholder0_32'):
+						value = strat.readInt32LE()
+						# can be 32-bit in some strats
+						if value != 0:
+							strat.setPos(strat.getPos() - 4)
 					else:
 						pass
 			
@@ -223,9 +241,25 @@ def disassemble(path, strat, section_info, instructions):
 def handle_data(path, strat, section_info, instructions):
 	Path(path + section_info.extension).write_bytes(strat.readBytes(section_info.length) or b"")
 
+def handle_refs(path, strat, section_info, instructions):
+	entries_count = strat.readInt16LE()
+	deps = []
+
+	for i in range(entries_count):
+		kind = strat.readInt8()
+
+		if kind == 0:
+			deps.append(strat.readBytes(strat.readInt8()).decode('latin-1').replace('\x00', ''))
+		else:
+			strat.readInt16LE()
+	
+	for dep in deps:
+		instructions.appendPreamble(f"@preload {dep}\n")
+
 SECTION_HANDLERS = {
 	"code": disassemble,
 	"data": handle_data,
+	"refs": handle_refs,
 }
 
 def process(path):
