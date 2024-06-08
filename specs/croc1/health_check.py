@@ -3,7 +3,7 @@
 Run disasembler, reconstructor and compiler for all strats
 """
 
-import sys, os, shutil, subprocess, re
+import sys, os, shutil, subprocess, re, csv
 
 KNOWN_BROKEN = [
     "BIRDSHLD.BIN", # Broken header
@@ -37,6 +37,16 @@ KNOWN_BROKEN = [
     # "UPEXIT.BIN" # Some weird 0xfd after valid `UnpausePlayer`
 ]
 
+KNOWN_SIZES = {
+    "DesertExplosion": 1, # Bigger than in the table!
+    "Grinder": 1, # Bigger than in the table!
+    "LavaSpout": 1, # Bigger than in the table!
+    "MrLavaBlub": 0,
+    "FrkSpkle": 0,
+    "MalletMan2": 1,
+    "TeleportingTemp": 0
+}
+
 def full_run(strats_dir, csv_path, output_dir):
     if not os.path.isdir(strats_dir):
         raise Exception(f"{strats_dir} is not a directory")
@@ -51,10 +61,14 @@ def full_run(strats_dir, csv_path, output_dir):
         if item[-4:] == ".BIN" and os.path.isfile(os.path.join(strats_dir, item)):
             strats.append(item)
 
+    strat_sizes = load_strat_sizes(csv_path)
+
     print_fixed("STRAT", 15)
     print_fixed("DISASM", 12)
     print_fixed("ASM", 12)
-    print("DIFF")
+    print_fixed("DIFF", 12)
+    print_fixed("DECOMP", 12)
+    print("COMP")
 
     counts = {
         "disassembler": {"success": 0, "warning": 0, "failed": 0},
@@ -66,7 +80,8 @@ def full_run(strats_dir, csv_path, output_dir):
     }
 
     for strat in strats:
-        run_strat(strat, os.path.join(strats_dir, strat), csv_path, os.path.join(output_dir, strat[:-4]), counts)
+        run_strat(strat, os.path.join(strats_dir, strat), csv_path,
+                  os.path.join(output_dir, strat[:-4]), counts, strat_sizes)
 
     print("")
     print_fixed("STAGE", 20)
@@ -78,7 +93,7 @@ def full_run(strats_dir, csv_path, output_dir):
 
     total = len(strats) - counts["ignored"]
 
-    for stage in ["disassembler", "assembler", "diff"]:
+    for stage in ["disassembler", "assembler", "diff", "reconstructor", "compiler"]:
         print_fixed(stage, 20)
         print_fixed(counts[stage]["success"], 10)
         print_fixed(counts[stage]["warning"], 10)
@@ -91,7 +106,7 @@ def full_run(strats_dir, csv_path, output_dir):
     
     print(f"\nIgnored {counts['ignored']} strat files")
 
-def run_strat(strat, strat_path, csv_path, output_dir, counts):
+def run_strat(strat, strat_path, csv_path, output_dir, counts, strat_sizes):
     print_fixed(strat, 15)
 
     if strat in KNOWN_BROKEN:
@@ -188,28 +203,131 @@ def run_strat(strat, strat_path, csv_path, output_dir, counts):
 
     try:
         result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=1)
+
+        with open(os.path.join(output_dir, f"{strat}.check_diff.out"), "w", encoding = "utf-8") as f:
+            f.write(result.stdout)
+        with open(os.path.join(output_dir, f"{strat}.check_diff.err"), "w", encoding = "utf-8") as f:
+            f.write(result.stderr)
+
+        if result.returncode != 0:
+            print_fixed("Failed!", 12)
+            counts["diff"]["failed"] += 1
+        else:
+            if result.stdout != "":
+                print_fixed("Mismatch!", 12)
+                counts["diff"]["failed"] += 1
+            else:
+                counts["diff"]["success"] += 1
+                print_fixed("OK", 12)
+
+    except subprocess.TimeoutExpired:
+        print_fixed("Timeout!", 12)
+        counts["diff"]["failed"] += 1
+
+    # Reconstruction
+
+    cmd = ["python", os.path.join(bin_dir, '..', '..', 'reconstruct.py'), strat_disasm, strat_bin]
+
+    try:
+        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=1)
     except subprocess.TimeoutExpired:
         print("Timeout!")
-        counts["diff"]["failed"] += 1
+        counts["reconstructor"]["failed"] += 1
         return
 
-    with open(os.path.join(output_dir, f"{strat}.check_diff.out"), "w", encoding = "utf-8") as f:
+    with open(os.path.join(output_dir, f"{strat}.reconstructor.out"), "w", encoding = "utf-8") as f:
         f.write(result.stdout)
-    with open(os.path.join(output_dir, f"{strat}.check_diff.err"), "w", encoding = "utf-8") as f:
+    with open(os.path.join(output_dir, f"{strat}.reconstructor.err"), "w", encoding = "utf-8") as f:
         f.write(result.stderr)
 
     if result.returncode != 0:
         print("Failed!")
-        counts["diff"]["failed"] += 1
+        counts["reconstructor"]["failed"] += 1
+        return
+    
+    mo = re.search("([\d\.]+%) of lines have been processed", result.stdout)
+    if not mo:
+        print("Invalid output!")
+        counts["reconstructor"]["failed"] += 1
+        return
+    
+    if mo.group(1) == "100.0%":
+        counts["reconstructor"]["success"] += 1
+    else:
+        counts["reconstructor"]["warning"] += 1
+        print(mo.group(1))
+        return
+    
+    print_fixed("OK", 12)
+
+    # Recompiling
+
+    strats_decomp = []
+    strats_names = []
+    for item in os.listdir(output_dir):
+        path = os.path.join(output_dir, item)
+        if os.path.isfile(path) and item[-4:] == ".c1s":
+            strats_decomp.append(path)
+            name = item.split(".")[-2]
+            if name != "__unused":
+                strats_names.append(name)
+
+    strat_recompiled = strat_bin[:-4] + ".recompiled.BIN"
+
+    if os.path.exists(strat_recompiled):
+        os.remove(strat_recompiled)
+
+    cmd = ["python", os.path.join(bin_dir, '..', '..', 'compile.py')] + strats_decomp + [strat_recompiled]
+
+    try:
+        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=10)
+    except subprocess.TimeoutExpired:
+        print("Timeout!")
+        counts["compiler"]["failed"] += 1
         return
 
-    if result.stdout != "":
-        print("Mismatch!")
-        counts["diff"]["failed"] += 1
-        return
+    with open(os.path.join(output_dir, f"{strat}.compiler.out"), "w", encoding = "utf-8") as f:
+        f.write(result.stdout)
+    with open(os.path.join(output_dir, f"{strat}.compiler.err"), "w", encoding = "utf-8") as f:
+        f.write(result.stderr)
 
-    counts["diff"]["success"] += 1
+    if result.returncode != 0 or not os.path.isfile(strat_recompiled):
+        print("Failed!")
+        counts["compiler"]["failed"] += 1
+        return
+    
+    new_sizes = {}
+    for line in result.stdout.split("\n"):
+        mo = re.search(
+            "UPDATE StratIndex SET pc = \\d+, var_size = (\\d+) WHERE name = '(\\S+)';",
+            line
+        )
+        if mo:
+            new_sizes[mo.group(2)] = int(mo.group(1))
+
+    for name in strats_names:
+        if name not in new_sizes:
+            print("Missing strat!")
+            counts["compiler"]["failed"] += 1
+            return
+        
+        if new_sizes[name] != strat_sizes[name]:
+            if name not in KNOWN_SIZES or new_sizes[name] != KNOWN_SIZES[name]:
+                print("Size mismatch!")
+                counts["compiler"]["failed"] += 1
+                return
+    
+    counts["compiler"]["success"] += 1
     print("OK")
+
+def load_strat_sizes(csv_path):
+    sizes = {}
+    with open(csv_path, newline = "") as f:
+        data = csv.DictReader(f)
+        for entry in data:
+            sizes[entry['name']] = int(entry['var_size'])
+
+    return sizes
 
 def print_fixed(string, width):
     s = str(string)
