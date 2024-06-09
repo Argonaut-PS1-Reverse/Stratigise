@@ -131,7 +131,7 @@ def run_strat(strat, strat_path, csv_path, output_dir, counts):
         counts["disassembler"]["failed"] += 1
         return
     
-    mo = re.search("Found (\d+) strat\(s\) in", result.stdout)
+    mo = re.search("Found (\\d+) strat\\(s\\) in", result.stdout)
     if not mo:
         print("Invalid output!")
         counts["reconstructor"]["failed"] += 1
