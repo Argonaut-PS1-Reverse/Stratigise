@@ -57,8 +57,8 @@ def processSections(strat, instr):
 		print("Warning: specs/croc1: Strats.csv not found, won't be able to provide strat entry locations. If you modify the strat before the last strat entry point and the size/entry point locations is not exactly the same in the resulting binary then your strat will crash or not work properly.")
 	
 	return [
+		SectionInfo('refs', 8 + code_size, audio_size + 4, None),
 		SectionInfo('code', 8, code_size, ".DIS", params = info),
-		SectionInfo('data', 8 + code_size, audio_size + 4, ".AXX"),
 	]
 
 """
@@ -120,8 +120,8 @@ opcodes = {
 	0x2D: ['TiltForward', 'eval'],
 	0x2E: ['TiltRight', 'eval'],
 	0x2F: ['TiltLeft', 'eval'],
-	0x30: ['Spawn', 'placeholder64', 'int8', 'varargs'],
-	0x31: ['CreateTrigger', 'int8', 'varargs', 'address16'],
+	0x30: ['Spawn', 'placeholder32_64', 'int8', 'varargs'],
+	0x31: ['CreateTrigger', 'int8', 'varargs', 'address16', 'placeholder0_32'], # In some weird strats it is followed by 4 zero bytes
 	0x32: ['KillTrigger', 'int16'], # hcf
 	0x33: ['CommandError'],
 	0x34: ['EndTrigger'],
@@ -146,7 +146,7 @@ opcodes = {
 	0x47: ['CamWobble', 'eval'],
 	0x48: ['LookAtMe_0'],
 	0x49: ['ShadowSize', 'eval'],
-	0x4A: ['ShadowType'],
+	0x4A: ['ShadowType', 'int8'],
 	0x4B: ['ClearAnim'],
 	0x4C: ['StopFall'],
 	0x4D: ['SetPlayerPosRel', 'eval', 'eval', 'eval'],
@@ -181,7 +181,7 @@ opcodes = {
 	0x6A: ['AnimCtrlSpdOn'],
 	0x6B: ['AnimCtrlSpdOff'],
 	0x6C: ['LetParam', 'int16', 'eval'],
-	0x6D: ['TurnTowardPosX', 'eval'],
+	0x6D: ['TurnTowardPosX', 'eval', 'eval', 'eval', 'eval'],
 	0x6E: ['SpecialFXOff', 'eval'],
 	0x6F: ['OpenEyes'],
 	0x70: ['CloseEyes', 'int8', 'varargs'], # Warning: See Blink
@@ -191,7 +191,7 @@ opcodes = {
 	0x74: ['PushCamera'],
 	0x75: ['PullCamera'],
 	0x76: ['Float'],
-	0x77: ['SpawnChild', 'int32', 'int16'], # Warning: Variable arguments, cannot yet properly disassemble
+	0x77: ['SpawnChild','placeholder32_64', 'int8', 'varargs'],
 	0x78: ['SetCamera', 'eval'],
 	0x79: ['NextImm'],
 	0x7A: ['AddPickup', 'eval'],
@@ -210,17 +210,17 @@ opcodes = {
 	0x87: ['NextWaypoint'],
 	0x88: ['PrevWaypoint'],
 	0x89: ['TurnTowardWaypointXY', 'eval', 'eval'],
-	0x8A: ['TurnTowardPosXY', 'eval'],
+	0x8A: ['TurnTowardPosXY', 'eval', 'eval', 'eval', 'eval', 'eval'],
 	0x8B: ['NearestWaypointNext'],
 	0x8C: ['NearestWaypointPrev'],
 	0x8D: ['DeleteWaypoint'],
 	0x8E: ['CommandError'],
 	0x8F: ['MoveForwardAngle', 'eval', 'eval'],
-	0x90: ['TurnTowardPosY', 'eval'],
+	0x90: ['TurnTowardPosY', 'eval', 'eval', 'eval', 'eval'],
 	0x91: ['MovePlayerForward', 'eval'],
 	0x92: ['MovePlayerBackward', 'eval'],
 	0x93: ['LoopSound', 'eval', 'eval'],
-	0x94: ['Wobble', 'int16'],
+	0x94: ['Wobble', 'int8', 'int16'],
 	0x95: ['CamHold', 'eval'],
 	0x96: ['SpeedUp', 'eval'],
 	0x97: ['SlowDown', 'eval'],
@@ -249,8 +249,8 @@ opcodes = {
 	0xAE: ['UntilImm', 'eval'],
 	0xAF: ['Collected'],
 	0xB0: ['Dec', 'int8', 'int16'],
-	0xB1: ['SpawnFrom', 'int32', 'int16', 'eval'], # Warning: Variable arguments, cannot yet properly disassemble
-	0xB2: ['LetXParam'],
+	0xB1: ['SpawnFrom', 'placeholder32_64', 'int8', 'varargs'],
+	0xB2: ['LetXParam', 'int16', 'eval'],
 	0xB3: ['RemoveCrystal'],
 	0xB4: ['CollectJigsaw', 'eval'],
 	0xB5: ['Bonus', 'int32'],
@@ -268,7 +268,7 @@ opcodes = {
 	0xC1: ['SetEnvelope', 'eval', 'eval', 'eval', 'eval', 'eval', 'eval'],
 	0xC2: ['TurnTowardPlayerX', 'eval'],
 	0xC3: ['TurnTowardPlayerY', 'eval'],
-	0xC4: ['TurnTowardPlayerXY', 'eval'],
+	0xC4: ['TurnTowardPlayerXY', 'eval', 'eval'],
 	0xC5: ['ForceDoor', 'eval'],
 	0xC6: ['LevelStats'],
 	0xC7: ['ReSeed'],
@@ -325,7 +325,7 @@ opcodes = {
 	0xFA: ['CommandError'],
 	0xFB: ['CommandError'],
 	0xFC: ['CommandError'],
-	0xFD: ['CommandError'],
+	0xFD: ['Command0xfd'], # hcf, appears in UPEXIT.BIN only
 	0xFE: ['TonyTest'],
 	0xFF: ['LewisTest', 'int8', 'eval'],
 }
@@ -379,19 +379,24 @@ EVALUATE_NAMES = {
 	0x21: "VelocityLessThan",
 	0x22: "DistanceFromPoint",
 	0x23: "CheckAnimFlag32",
+	0x24: "BitShiftRight",
+	0x25: "BitShiftLeft",
 	0x26: "ReturnZero",
+	0x2d: "PushXParam"
 }
 
 STRING_KINDS = {
 	"Spawn": 1,
+	"SpawnFrom": 1,
+	"SpawnChild": 1,
 	"LoadObject": 2,
-	"LoadAsset0": None, # TODO
+	"LoadAsset0": 5,
 	"LoadAnim": 4,
 	"LoadAsset1": 3,
-	"LoadAsset2": None, # TODO
-	"LoadAsset3": None, # TODO
-	"LoadAsset4": None, # TODO
-	"LoadAsset5": None, # TODO
+	"LoadAsset2": 7,
+	"LoadAsset3": 8,
+	"LoadAsset4": 9,
+	"LoadAsset5": 6,
 }
 
 def unevaluate(strat):
@@ -493,8 +498,8 @@ def unevaluate(strat):
 			if (pp == 0x01 or pp == 0x02):
 				operations.append(Symbol(EVALUATE_NAMES[op][pp]))
 				strat.readInt32LE() # placeholder
-				strat.readInt8() # ignore value
-				operations.append(strat.readString())
+				sz = strat.readInt8()
+				operations.append(strat.readBytes(sz).decode('latin-1').replace('\x00', ''))
 			
 			# 0x03, 0x04, 0x05 - These just seem to directly load the asset
 			elif (pp == 0x03 or pp == 0x04 or pp == 0x05):
@@ -559,9 +564,12 @@ def unevaluate(strat):
 		elif (op == 0x1A):
 			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
-		# 0x1B - Check if the player is within the given radius (disregarding height) at the top of the stack
+		# 0x1B - Check if the player is within the given radius (disregarding height) at the top of the stack (according to decompiled source)
+		# But actually in all its occurences it is called on empty stack and its arg seems to be an int16 so handling it as PushPGVar because
+		# we have corresponding LetPGVar insns in such strats
 		elif (op == 0x1B):
-			operations.append(Symbol(EVALUATE_NAMES[op]))
+			operations.append(Symbol(EVALUATE_NAMES[0x01]))
+			operations.append(strat.readInt16LE())
 		
 		# 0x1C - Push extern global to the stack
 		elif (op == 0x1C):
@@ -599,11 +607,24 @@ def unevaluate(strat):
 		# Flag32 referes to 32nd flag, not 32-bit integer
 		elif (op == 0x23):
 			operations.append(Symbol(EVALUATE_NAMES[op]))
+
+		# 0x24 - Pop top two values and perform left bit shift
+		elif (op == 0x24):
+			operations.append(Symbol(EVALUATE_NAMES[op]))
+
+		# 0x25 - Pop top two values and perform right bit shift
+		elif (op == 0x25):
+			operations.append(Symbol(EVALUATE_NAMES[op]))
 		
 		# 0x26 - Push zero and stop eval
 		elif (op == 0x26):
 			operations.append(Symbol(EVALUATE_NAMES[op]))
 			break
+
+		# 0x01 - Get a XGVar
+		elif (op == 0x2d):
+			operations.append(Symbol(EVALUATE_NAMES[op]))
+			operations.append(strat.readInt16LE())
 		
 		# Unknown eval opcode
 		else:
@@ -641,7 +662,7 @@ def reevaluate(strat, tokens, string_locations):
 		# Handle the arguments
 		match (command):
 			# Anything that needs one 16-bit number
-			case "PushPGVar" | "PushGVar" | "PushAVar" | "PushExternGlobal" | "PushStratVar":
+			case "PushPGVar" | "PushGVar" | "PushAVar" | "PushExternGlobal" | "PushStratVar" | "PushXParam":
 				strat.writeInt16LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
 			
 			# Anything that needs one 32-bit number
@@ -649,7 +670,7 @@ def reevaluate(strat, tokens, string_locations):
 				strat.writeInt32LE(tokens.expect(TokenType.NUMBER, f"Evaluate needs a number after {command}.").data)
 			
 			# Asset load commands
-			case "LoadObject" | "LoadAsset0" | "LoadAnim" | "LoadAsset1" | "LoadAsset2" | "LoadAsset3" | "LoadAsset4" | "LoadAsset5":
+			case "LoadObject" | "LoadAsset0" | "LoadAnim" | "LoadAsset1" | "LoadAsset2" | "LoadAsset3":
 				# Need to write the command bit
 				strat.writeInt8(0x13)
 				
@@ -677,6 +698,17 @@ def reevaluate(strat, tokens, string_locations):
 
 				for _ in range(num_args):
 					reevaluate(strat, tokens, string_locations)
+
+			case  "LoadAsset4" | "LoadAsset5":
+				# Need to write the command bit
+				strat.writeInt8(0x13)
+
+				# We can take advantage of the fact that dict types were swapped
+				# internally but still have the same keys.
+				strat.writeInt8(EVALUATE_NAMES[0x13][command])
+
+				strat.writeInt32LE(0) # placeholder
+				string_locations.append({"kind": STRING_KINDS[command], "offset": strat.getPos() - 3}) # Yes, - 3
 	
 	return
 
@@ -710,8 +742,8 @@ def varargs(strat, op, args, instructions):
 			# Evaluate expression
 			args.append(unevaluate(strat))
 	
-	# Spawn
-	elif (op == 0x30):
+	# Spawn, SpawnFrom, SpawnChild
+	elif (op in [0x30, 0xb1, 0x77]):
 		# Read string
 		args.append(strat.readBytes(strat.readInt8()).decode('latin-1'))
 		
@@ -795,7 +827,7 @@ def revarargs(strat, tokens, command, rewrite_list, string_locations):
 			# Case expression to match
 			reevaluate(strat, tokens, string_locations)
 	
-	elif (command == "Spawn"):
+	elif (command in ["Spawn", "SpawnFrom", "SpawnChild"]):
 		# Placeholders
 		strat.writeInt32LE(0)
 		strat.writeInt32LE(0)
