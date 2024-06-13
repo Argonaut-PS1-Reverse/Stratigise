@@ -19,7 +19,7 @@ def makeWad(input, output):
 	Make a croc 1 wad/idx pair given the input and output filenames.
 	"""
 	
-	files = getFiles(input)
+	files = sorted(getFiles(input))
 	
 	index = open(output + ".idx", "w")
 	wad = open(output + ".wad", "wb")
