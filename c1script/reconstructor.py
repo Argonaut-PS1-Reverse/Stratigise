@@ -278,6 +278,8 @@ class Reconstructor:
             for vk, vd in c1script.mappings.VAR_MAP.items():
                 if vd["let"] == insn.op:
                     var_name = vd["name_pfx"] + str(index.value)
+                    if var_name in c1script.mappings.ALIEN_VARS:
+                        var_name = c1script.mappings.ALIEN_VARS[var_name]
                     self.use_var(section, vk, index.value, True)
 
                     return NodeAssignment(None, NodeIdentifier(None, var_name), "=", expr)
@@ -301,6 +303,8 @@ class Reconstructor:
             for vk, vd in c1script.mappings.VAR_MAP.items():
                 if vd["kind_int"] == kind.value:
                     var_name = vd["name_pfx"] + str(index.value)
+                    if var_name in c1script.mappings.ALIEN_VARS:
+                        var_name = c1script.mappings.ALIEN_VARS[var_name]
                     self.use_var(section, vk, index.value)
 
                     return NodeAssignment(None, NodeIdentifier(None, var_name), op, NodeInteger(None, 1))
@@ -430,6 +434,8 @@ class Reconstructor:
                 for vk, vd in c1script.mappings.VAR_MAP.items():
                     if vd["push"] == insn.op:
                         var_name = vd["name_pfx"] + str(index.value)
+                        if var_name in c1script.mappings.ALIEN_VARS:
+                            var_name = c1script.mappings.ALIEN_VARS[var_name]
                         self.use_var(section, vk, index.value, True)
 
                         stack.append(NodeIdentifier(None, var_name))
@@ -1034,6 +1040,8 @@ class Reconstructor:
                     comment = "local"
 
                 name = c1script.mappings.VAR_MAP[vk]["name_pfx"] + str(index)
+                if name in c1script.mappings.ALIEN_VARS:
+                    name = c1script.mappings.ALIEN_VARS[name]
                 usages.append(NodeUse(None, NodeIdentifier(None, vk), NodeInteger(None, index), NodeIdentifier(None, name), comment))
 
         return preloads + usages, vars_count

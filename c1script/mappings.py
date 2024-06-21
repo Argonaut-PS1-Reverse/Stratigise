@@ -277,3 +277,8 @@ SPECIAL_CONDITIONS = {
     "jumping": "IfJumping",
     "falling": "IfFalling",
 }
+
+ALIEN_VARS = {
+    "a_var28": "distance_to_player",
+    "a_var29": "distance_to_init_pos"
+}
