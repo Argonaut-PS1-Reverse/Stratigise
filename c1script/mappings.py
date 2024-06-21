@@ -253,7 +253,7 @@ UNARY_OPERATOR_MAP = {
 
 VAR_MAP = {
     "vars": {"let": "LetGVar", "push": "PushGVar", "limit": 192, "kind_int": 2, "name_pfx": "g_var"},
-    "parent_vars": {"let": "LetPGVar", "push": "PushPGVar", "limit": 192, "kind_int": None, "name_pfx": "pg_var"},
+    "pg_vars": {"let": "LetPGVar", "push": "PushPGVar", "limit": 192, "kind_int": None, "name_pfx": "pg_var"},
     "alien_vars": {"let": "LetAVar", "push": "PushAVar", "limit": 128, "kind_int": None, "name_pfx": "a_var"}, # not sure about limit
     "params": {"let": "LetParam", "push": "PushStratVar", "limit": 8, "kind_int": 29, "name_pfx": "param"},
     "xg_vars": {"let": "LetXGVar", "push": "PushExternGlobal", "limit": 74, "kind_int": None, "name_pfx": "xg_var"},
