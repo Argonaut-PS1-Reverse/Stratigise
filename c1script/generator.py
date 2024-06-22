@@ -82,7 +82,7 @@ class Generator:
     def generate_preload(self, node):
         self.assert_type(node, NodePreload)
 
-        self.comment(f"@preload {node.strat.result}")
+        self.asm += f"@preload {node.strat.result}\n"
 
     def generate_use(self, node):
         self.assert_type(node, NodeUse)
