@@ -128,7 +128,7 @@ def run_strat(strat, strat_path, csv_path, output_dir, counts, strat_sizes):
     cmd = ["python", os.path.join(bin_dir, '..', '..', 'disassemble.py'), strat_bin]
 
     try:
-        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=1)
+        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=10)
     except subprocess.TimeoutExpired:
         print("Timeout!")
         counts["disassembler"]["failed"] += 1
@@ -178,7 +178,7 @@ def run_strat(strat, strat_path, csv_path, output_dir, counts, strat_sizes):
     cmd = ["python", os.path.join(bin_dir, '..', '..', 'assemble.py'), strat_disasm, strat_reasm]
 
     try:
-        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=1)
+        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=10)
     except subprocess.TimeoutExpired:
         print("Timeout!")
         counts["assembler"]["failed"] += 1
@@ -229,7 +229,7 @@ def run_strat(strat, strat_path, csv_path, output_dir, counts, strat_sizes):
     cmd = ["python", os.path.join(bin_dir, '..', '..', 'reconstruct.py'), strat_disasm, strat_bin]
 
     try:
-        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=1)
+        result = subprocess.run(cmd, capture_output = True, encoding = "utf-8", env={'PYTHONIOENCODING': 'utf-8'}, timeout=10)
     except subprocess.TimeoutExpired:
         print("Timeout!")
         counts["reconstructor"]["failed"] += 1

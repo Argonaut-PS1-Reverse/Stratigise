@@ -56,7 +56,6 @@ COMMAND_SIGNATURES = [
 	Signature("turnTowardXY", "TurnTowardXY", ["int16", "eval", "eval"]),
 	Signature("hold", "Hold", []),
 	Signature("release", "Release", ["string"]),
-	Signature("inc", "Inc", ["int8", "int16"]),
 	Signature("playerAttackOn", "PlayerAttackOn", []),
 	Signature("playerAttackOff", "PlayerAttackOff", []),
 	Signature("camWobble", "CamWobble", ["eval"]),
@@ -156,7 +155,6 @@ COMMAND_SIGNATURES = [
 	Signature("slideOff", "SlideOff", []),
 	Signature("firstWaypoint", "FirstWaypoint", []),
 	Signature("collected", "Collected", []),
-	Signature("dec", "Dec", ["int8", "int16"]),
 	Signature("spawnFrom", "SpawnFrom", ["int8", "string", "varargs"]), # Warning: Variable arguments, cannot yet properly disassemble
 	Signature("letXParam", "LetXParam", ["int16", "eval"]),
 	Signature("removeCrystal", "RemoveCrystal", []),
@@ -253,11 +251,11 @@ UNARY_OPERATOR_MAP = {
 
 VAR_MAP = {
     "vars": {"let": "LetGVar", "push": "PushGVar", "limit": 192, "kind_int": 2, "name_pfx": "g_var"},
-    "pg_vars": {"let": "LetPGVar", "push": "PushPGVar", "limit": 192, "kind_int": None, "name_pfx": "pg_var"},
+    "pg_vars": {"let": "LetPGVar", "push": "PushPGVar", "limit": 192, "kind_int": 1, "name_pfx": "pg_var"},
     "alien_vars": {"let": "LetAVar", "push": "PushAVar", "limit": 128, "kind_int": None, "name_pfx": "a_var"}, # not sure about limit
     "params": {"let": "LetParam", "push": "PushStratVar", "limit": 8, "kind_int": 29, "name_pfx": "param"},
-    "xg_vars": {"let": "LetXGVar", "push": "PushExternGlobal", "limit": 74, "kind_int": None, "name_pfx": "xg_var"},
-    "x_params": {"let": "LetXParam", "push": "PushXParam", "limit": 8, "kind_int": None, "name_pfx": "x_param"}
+    "xg_vars": {"let": "LetXGVar", "push": "PushExternGlobal", "limit": 74, "kind_int": 28, "name_pfx": "xg_var"},
+    "x_params": {"let": "LetXParam", "push": "PushXParam", "limit": 8, "kind_int": 45, "name_pfx": "x_param"}
 }
 VAR_SETTERS = [v["let"] for v in VAR_MAP.values()]
 VAR_GETTERS = [v["push"] for v in VAR_MAP.values()]
