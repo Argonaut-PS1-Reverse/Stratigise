@@ -193,10 +193,16 @@ class Reconstructor:
         cur_type = self.section_type_from_insn(section.insns[-1])
         i = len(section.insns) - 2
         end = len(section.insns) - 1
+        type = None
 
         while i >= 1:
             type = self.section_type_from_insn(section.insns[i])
             if type != SectionType.UNKNOWN:
+                if i == end - 1 and type == SectionType.STRAT:
+                    type = SectionType.UNKNOWN
+                    i -= 1
+                    continue
+
                 insn = section.insns[i + 1]
                 if isinstance(insn, Label) and insn.nosplit:
                     insn.nosplit = False
@@ -217,6 +223,9 @@ class Reconstructor:
                 cur_type = type
 
             i -= 1
+
+        if type == SectionType.STRAT and section.type != SectionType.STRAT:
+            end += 1 # Including `Remove` insn
 
         statements = [s for s in [self.finalize_statement(insn) for insn in section.insns[:end]] if s is not None]
 
