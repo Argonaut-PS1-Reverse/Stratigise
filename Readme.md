@@ -79,6 +79,33 @@ You can pass in multipule files and use `--spec` to set the disassembler:
 disassemble.py --spec gamename1 file1 file2 ... --spec gamename2 file1 file2 ...
 ```
 
+## Scripting language
+
+There are several tools that support translation of Croc 1 strat disassemblies into some
+higher level scripting language (a.k.a. C1S) and compiling them back.
+
+```
+reconstruct.py dis_file output_c1s_files_prefix
+compile.py c1s_file1 c1s_file2 ... output_bin_file
+```
+
+More info about the language and features [here](/doc/Stratigise/C1Script.md)
+
+## Health check
+
+To perform a full health check against all Croc 1 strat files, run this:
+
+```
+specs/croc1/health_check.py croc1_strats_dir strats_csv_path result_dir
+```
+
+It runs the following stages for each strat file and prints the stats:
+ * Disassebly
+ * Re-assembly
+ * Comparison of original and reassembled binaries for differences
+ * Reconstruction of C1S code from disassembly
+ * Compilation of reconstructed C1S code
+
 ## Todo
 
 ### Documentation
