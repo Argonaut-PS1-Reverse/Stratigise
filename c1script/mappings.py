@@ -277,6 +277,14 @@ SPECIAL_CONDITIONS = {
 }
 
 ALIEN_VARS = {
-    "a_var28": "distance_to_player",
-    "a_var29": "distance_to_init_pos"
+    "a_var5": "a_angle_to_target_x",
+    "a_var6": "a_angle_to_target_y",
+    "a_var7": "a_angle_to_target_z",
+    "a_var28": "a_distance_to_player",
+    "a_var29": "a_distance_to_init_pos",
+    "a_var40": "a_map_style",
+    "a_var54": "a_angle_to_player_x",
+    "a_var55": "a_angle_to_player_y",
+    "a_var56": "a_angle_to_player_z",
+    "a_var83": "a_settings_lights_on"
 }

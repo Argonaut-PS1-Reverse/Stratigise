@@ -237,7 +237,7 @@ class Generator:
 
         if isinstance(node.condition, NodeSpecialCondition):
             insn = c1script.mappings.SPECIAL_CONDITIONS[node.condition.name]
-            if not node.condition.invert:
+            if node.condition.invert:
                 block, else_part = else_part, block
                 if block is None:
                     block = NodeBlock(None, [])
@@ -247,7 +247,7 @@ class Generator:
 
             self.start_line(insn)
             if insn == "If":
-                self.generate_eval(condition, append = "IsZero")
+                self.generate_eval(condition)
             self.append_line(label_end)
             self.newline()
 
@@ -256,26 +256,27 @@ class Generator:
             self.set_label(label_end)
         
         else:
-            label_then = f"if_{node.loc.line}_{node.loc.pos}_then"
+            label_else = f"if_{node.loc.line}_{node.loc.pos}_else"
             label_end = f"if_{node.loc.line}_{node.loc.pos}_end"
 
             self.start_line(insn)
             if insn == "If":
                 self.generate_eval(condition)
-            self.append_line(label_then)
+            self.append_line(label_else)
             self.newline()
 
-            if isinstance(else_part, NodeIf):
-                self.generate_if(else_part)
-            else:
-                self.generate_block(else_part)
+            self.generate_block(block)
             
             self.start_line("Else")
             self.append_line(label_end)
             self.newline()
 
-            self.set_label(label_then)
-            self.generate_block(block)
+            self.set_label(label_else)
+
+            if isinstance(else_part, NodeIf):
+                self.generate_if(else_part)
+            else:
+                self.generate_block(else_part)
 
             self.set_label(label_end)
         
