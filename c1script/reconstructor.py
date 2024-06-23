@@ -557,9 +557,8 @@ class Reconstructor:
             # Create `if` structure`
             insn.jumps.remove(section.insns[index].loc)
 
-            not_condition = self.invert_condition(condition)
             statements = [s for s in [self.finalize_statement(insn) for insn in section.insns[index + 1:i]] if s is not None]
-            node = NodeIf(None, not_condition, NodeBlock(None, statements))
+            node = NodeIf(None, condition, NodeBlock(None, statements))
 
             print(f"  wrapped {section.insns[index].loc}-{insn.loc} in `if`")
             section.insns = section.insns[:index] + [node] + section.insns[i:]
@@ -592,9 +591,8 @@ class Reconstructor:
         
         if skip_else:
             # Ignore `else``end create `if` structure
-            not_condition = self.invert_condition(condition)
             statements = [s for s in [self.finalize_statement(insn) for insn in section.insns[index + 1:i]] if s is not None]
-            node = NodeIf(None, not_condition, NodeBlock(None, statements))
+            node = NodeIf(None, condition, NodeBlock(None, statements))
 
             print(f"  wrapped {section.insns[index].loc}-{insn.loc} in `if` but couldn't handle `Else`")
             section.insns = section.insns[:index] + [node] + section.insns[i:]
@@ -605,10 +603,9 @@ class Reconstructor:
             insn.jumps.remove(section.insns[index].loc)
         insn2.jumps.remove(section.insns[else_index].loc)
 
-        not_condition = self.invert_condition(condition)
         statements_then = [s for s in [self.finalize_statement(insn) for insn in section.insns[index + 1:else_index]] if s is not None]
         statements_else = [s for s in [self.finalize_statement(insn) for insn in section.insns[else_index + 1:i]] if s is not None]
-        node = NodeIf(None, not_condition, NodeBlock(None, statements_then), NodeBlock(None, statements_else))
+        node = NodeIf(None, condition, NodeBlock(None, statements_then), NodeBlock(None, statements_else))
 
         print(f"  wrapped {section.insns[index].loc}-{insn2.loc} in `if-else`")
         section.insns = section.insns[:index] + [node] + section.insns[i:]
@@ -907,27 +904,6 @@ class Reconstructor:
         print(f"  wrapped {section.insns[index].loc}-{insn.loc} in `while (true)`")
         section.insns = section.insns[:index] + [node] + section.insns[i + 1:]
         return index
-    
-    def invert_condition(self, condition):
-        if isinstance(condition, NodeSpecialCondition):
-            return NodeSpecialCondition(condition.loc, condition.name, not condition.invert)
-
-        if isinstance(condition, NodeUnaryExpr) and condition.operator == "!":
-            return condition.expr
-        
-        if isinstance(condition, NodeBinaryExpr):
-            invert_map = {
-                "==": "!=",
-                "!=": "==",
-                ">": "<=",
-                "<": ">=",
-                ">=": "<",
-                "<=": ">"
-            }
-            if condition.operator in invert_map:
-                return NodeBinaryExpr(None, condition.left, condition.right, invert_map[condition.operator])
-
-        return NodeUnaryExpr(None, condition, "!")
 
     def finalize_statement(self, insn):
         if isinstance(insn, NodeBase):
