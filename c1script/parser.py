@@ -857,6 +857,10 @@ class Parser:
         for name in c1script.mappings.FUNCTION_MAP.keys():
             self.identifiers[name] = IdentifierData(IdentifierType.FUNCTION)
 
+        for consts in c1script.mappings.ALIEN_VARS_CONSTANTS.values():
+            for value, name in consts.items():
+                self.identifiers[name] = IdentifierData(IdentifierType.CONST, value)
+
     def check_args(self, args, signature):
         sign = signature.signature
 
