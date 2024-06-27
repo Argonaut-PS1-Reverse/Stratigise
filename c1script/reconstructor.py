@@ -287,8 +287,8 @@ class Reconstructor:
             for vk, vd in c1script.mappings.VAR_MAP.items():
                 if vd["let"] == insn.op:
                     var_name = vd["name_pfx"] + str(index.value)
-                    if var_name in c1script.mappings.ALIEN_VARS:
-                        var_name = c1script.mappings.ALIEN_VARS[var_name]
+                    if vk == "alien_vars" and index.value in c1script.mappings.ALIEN_VARS:
+                        var_name = c1script.mappings.ALIEN_VARS[index.value]
                     self.use_var(section, vk, index.value, True)
 
                     return NodeAssignment(None, NodeIdentifier(None, var_name), "=", expr)
@@ -312,8 +312,8 @@ class Reconstructor:
             for vk, vd in c1script.mappings.VAR_MAP.items():
                 if vd["kind_int"] == kind.value:
                     var_name = vd["name_pfx"] + str(index.value)
-                    if var_name in c1script.mappings.ALIEN_VARS:
-                        var_name = c1script.mappings.ALIEN_VARS[var_name]
+                    if vk == "alien_vars" and index.value in c1script.mappings.ALIEN_VARS:
+                        var_name = c1script.mappings.ALIEN_VARS[index.value]
                     self.use_var(section, vk, index.value)
 
                     return NodeAssignment(None, NodeIdentifier(None, var_name), op, NodeInteger(None, 1))
@@ -412,7 +412,16 @@ class Reconstructor:
                 
                 op = list(reversed(c1script.mappings.BINARY_OPERATOR_MAP.keys()))[list(reversed(c1script.mappings.BINARY_OPERATOR_MAP.values())).index(insn.op)]
 
-                stack = stack[:-2] + [NodeBinaryExpr(None, stack[-2], stack[-1], op)]
+                if (
+                    op in ["==", "!="] and isinstance(stack[-2], NodeIdentifier) and
+                    stack[-2].identifier in c1script.mappings.ALIEN_VARS_CONSTANTS and
+                    isinstance(stack[-1], NodeInteger) and stack[-1].value in c1script.mappings.ALIEN_VARS_CONSTANTS[stack[-2].identifier]
+                ):
+                    rval = NodeIdentifier(stack[-1].loc, c1script.mappings.ALIEN_VARS_CONSTANTS[stack[-2].identifier][stack[-1].value])
+                else:
+                    rval = stack[-1]
+
+                stack = stack[:-2] + [NodeBinaryExpr(None, stack[-2], rval, op)]
 
             elif insn.op in c1script.mappings.UNARY_OPERATOR_MAP.values():
                 if len(stack) < 1:
@@ -443,8 +452,8 @@ class Reconstructor:
                 for vk, vd in c1script.mappings.VAR_MAP.items():
                     if vd["push"] == insn.op:
                         var_name = vd["name_pfx"] + str(index.value)
-                        if var_name in c1script.mappings.ALIEN_VARS:
-                            var_name = c1script.mappings.ALIEN_VARS[var_name]
+                        if vk == "alien_vars" and index.value in c1script.mappings.ALIEN_VARS:
+                            var_name = c1script.mappings.ALIEN_VARS[index.value]
                         self.use_var(section, vk, index.value, True)
 
                         stack.append(NodeIdentifier(None, var_name))
@@ -741,6 +750,10 @@ class Reconstructor:
             cases_count = self.process_arg(section, insn.args[1], "int16", insn.op)
             label_default = self.process_arg(section, insn.args[2], "label", insn.op)
 
+            consts = None
+            if isinstance(expr, NodeIdentifier) and expr.identifier in c1script.mappings.ALIEN_VARS_CONSTANTS:
+                consts = c1script.mappings.ALIEN_VARS_CONSTANTS[expr.identifier]
+
             if len(insn.args) != 3 + 2 * cases_count.value:
                 section.insns[index] = self.unhandled_line(insn, f"Wrong arguments count for `{insn.op}`")
                 return index + 1
@@ -753,8 +766,13 @@ class Reconstructor:
                     "value": self.process_arg(section, insn.args[3 + 2 * c + 1], "eval", insn.op),
                     "block": None
                 }
+
                 if case["label"].identifier not in labels:
                     labels.append(case["label"].identifier)
+
+                if consts is not None and isinstance(case["value"], NodeInteger) and case["value"].value in consts:
+                    case["value"] = NodeIdentifier(case["value"].loc, consts[case["value"].value])
+
                 cases.append(case)
 
         except ProcessStatementError as e:
@@ -1025,8 +1043,8 @@ class Reconstructor:
                     comment = "local"
 
                 name = c1script.mappings.VAR_MAP[vk]["name_pfx"] + str(index)
-                if name in c1script.mappings.ALIEN_VARS:
-                    name = c1script.mappings.ALIEN_VARS[name]
+                if vk == "alien_vars" and index in c1script.mappings.ALIEN_VARS:
+                        name = c1script.mappings.ALIEN_VARS[index]
                 usages.append(NodeUse(None, NodeIdentifier(None, vk), NodeInteger(None, index), NodeIdentifier(None, name), comment))
 
         return preloads + usages, vars_count
