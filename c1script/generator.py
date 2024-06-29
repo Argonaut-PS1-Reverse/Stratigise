@@ -14,8 +14,6 @@ class VarData:
         self.index = index
 
 class Generator:
-    MAGIC_VALUE = 65536
-
     def __init__(self, tree, strat_index = 0, skip_entry = False, skip_end = False):
         self.tree = tree
         self.asm = ""
@@ -77,7 +75,7 @@ class Generator:
     def generate_const(self, node):
         self.assert_type(node, NodeConst)
 
-        self.comment(f"constant {node.name.identifier} evaluated to {node.name.result}")
+        self.comment(f"constant {node.name.identifier} evaluated to {node.name.result / float(c1script.mappings.MAGIC_VALUE)}")
 
     def generate_preload(self, node):
         self.assert_type(node, NodePreload)
@@ -87,8 +85,8 @@ class Generator:
     def generate_use(self, node):
         self.assert_type(node, NodeUse)
 
-        self.allocate_var(node.alias.identifier, node.kind.identifier, node.index.result)
-        self.comment(f"using {node.kind.identifier}[{node.index.result}] as {node.alias.identifier}")
+        self.allocate_var(node.alias.identifier, node.kind.identifier, node.index.value)
+        self.comment(f"using {node.kind.identifier}[{node.index.value}] as {node.alias.identifier}")
 
     def generate_global_var(self, node):
         self.assert_type(node, NodeGlobalVar)
@@ -414,9 +412,9 @@ class Generator:
             arg = node.args.args[i]
 
             match type:
-                case "int8": self.append_line(f"{arg.result}")
-                case "int16": self.append_line(f"{arg.result}")
-                case "int32": self.append_line(f"{arg.result}")
+                case "int8": self.append_line(f"{int(arg.result / c1script.mappings.MAGIC_VALUE)}")
+                case "int16": self.append_line(f"{int(arg.result / c1script.mappings.MAGIC_VALUE)}")
+                case "int32": self.append_line(f"{int(arg.result / c1script.mappings.MAGIC_VALUE)}")
                 case "string": self.append_line(f"\"{arg.result}\"")
                 case "trigger": self.append_line(f"{self.labels[arg.result.trigger]}")
                 case "eval": self.generate_eval(arg)
@@ -478,18 +476,9 @@ class Generator:
 
         if node.result != None:
             if isinstance(node.result, int):
-                self.append_line(f"PushInt32 {node.result * self.MAGIC_VALUE}")
-            elif isinstance(node.result, decimal.Decimal):
-                self.append_line(f"PushInt32 {int(math.floor(node.result * self.MAGIC_VALUE))}")
-            elif isinstance(node.result, bool):
-                if node.result:
-                    self.append_line(f"PushInt32 {self.MAGIC_VALUE}")
-                else:
-                    self.append_line(f"PushZero")
+                self.append_line(f"PushInt32 {node.result}")
             else:
                 raise Exception(f"Unsupported value `{node.result}` in expression")
-        elif isinstance(node, NodeRawInteger):
-            self.append_line(f"PushInt32 {node.expr.result}")
         else:
             self.assert_type(node, NodeIdentifier)
             if node.identifier not in self.var_locs:

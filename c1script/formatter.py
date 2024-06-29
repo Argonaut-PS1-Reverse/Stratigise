@@ -3,6 +3,7 @@ Generation of script output from syntax tree
 """
 
 import decimal
+import c1script.mappings
 from c1script.nodes import *
 
 class VarData:
@@ -17,19 +18,20 @@ class Formatter:
     BINARY_PRIORITIES = {
         "or": 1,
         "and": 2,
-        "xor": 3,
-        ">": 4,
-        "<": 4,
-        ">=": 4,
-        "<=": 4,
-        "==": 4,
-        "!=": 4,
-        "<<": 5,
-        ">>": 5,
-        "+": 6,
-        "-": 6,
-        "*": 7,
-        "/": 7
+        "|": 3,
+        "&": 4,
+        ">": 5,
+        "<": 5,
+        ">=": 5,
+        "<=": 5,
+        "==": 5,
+        "!=": 5,
+        "<<": 6,
+        ">>": 6,
+        "+": 7,
+        "-": 7,
+        "*": 8,
+        "/": 8
     }
 
     def __init__(self, tree, title_comment = "Generated from a syntax tree"):
@@ -93,7 +95,7 @@ class Formatter:
     def format_use(self, node):
         self.assert_type(node, NodeUse)
 
-        self.start_line(f"use {node.kind.identifier}[{node.index.result}] as {node.alias.identifier}")
+        self.start_line(f"use {node.kind.identifier}[{self.formatted_expr(node.index)}] as {node.alias.identifier}")
         if node.comment is not None:
             self.comment(node.comment)
         else:
@@ -368,15 +370,15 @@ class Formatter:
     def formatted_integer(self, node):
         self.assert_type(node, NodeInteger)
 
-        return str(node.result)
+        return str(node.value)
 
     def formatted_number(self, node):
         self.assert_type(node, NodeNumber)
 
-        if node.result == 0:
+        if node.value == 0:
             return "0"
 
-        r = decimal.Decimal(node.result)
+        r = decimal.Decimal(node.value)
         rounded = r.quantize(decimal.Decimal(10) ** -3)
         if abs(r - rounded) < (decimal.Decimal(10) ** -5):
             s = str(r.quantize(decimal.Decimal(10) ** -4))
@@ -388,12 +390,12 @@ class Formatter:
     def formatted_raw_integer(self, node):
         self.assert_type(node, NodeRawInteger)
 
-        return f"raw({node.expr.result})"
+        return f"raw({self.formatted_expr(node.expr)})"
     
     def formatted_boolean(self, node):
         self.assert_type(node, NodeBoolean)
 
-        if node.result:
+        if node.value:
             return "true"
         else:
             return "false"
@@ -401,7 +403,7 @@ class Formatter:
     def formatted_string(self, node):
         self.assert_type(node, NodeString)
 
-        return f"\"{node.result}\""
+        return f"\"{node.value}\""
         
     def assert_type(self, node, type):
         if not isinstance(node, type):

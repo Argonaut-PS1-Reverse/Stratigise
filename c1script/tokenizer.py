@@ -97,7 +97,6 @@ KEYWORDS = [
 	"false",
 	"and",
 	"or",
-	"xor",
 	"jumping",
 	"falling",
 	"animend",
@@ -269,6 +268,9 @@ def tokens(text):
 				yield Token(TokenType.OPERATOR, c, line, start - line_start)
 
 			i -= 1
+
+		elif (c in "&|"):
+			yield Token(TokenType.OPERATOR, c, line, start - line_start)
 		
 		# Comments
 		elif (c in ["#", ";"]):
