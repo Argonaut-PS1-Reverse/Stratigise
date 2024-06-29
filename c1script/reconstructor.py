@@ -35,8 +35,6 @@ class ProcessStatementError(Exception):
         self.comment = comment
 
 class Reconstructor:
-    MAGIC_VALUE = 65536
-
     def __init__(self, insns, strat_attrs, preloads):
         self.insns = insns
         self.strat_attrs = strat_attrs
@@ -412,12 +410,10 @@ class Reconstructor:
                 
                 op = list(reversed(c1script.mappings.BINARY_OPERATOR_MAP.keys()))[list(reversed(c1script.mappings.BINARY_OPERATOR_MAP.values())).index(insn.op)]
 
-                if (
-                    op in ["==", "!="] and isinstance(stack[-2], NodeIdentifier) and
-                    stack[-2].identifier in c1script.mappings.ALIEN_VARS_CONSTANTS and
-                    isinstance(stack[-1], NodeInteger) and stack[-1].value in c1script.mappings.ALIEN_VARS_CONSTANTS[stack[-2].identifier]
-                ):
-                    rval = NodeIdentifier(stack[-1].loc, c1script.mappings.ALIEN_VARS_CONSTANTS[stack[-2].identifier][stack[-1].value])
+                if op in ["==", "!="]:
+                    rval = self.get_const_by_value(stack[-2], stack[-1])
+                elif op in ["&", "|"]:
+                    rval = self.get_const_flags_by_value(stack[-2], stack[-1])
                 else:
                     rval = stack[-1]
 
@@ -438,10 +434,10 @@ class Reconstructor:
                 val = insn.args[0]
                 if val > 0 and val < 32:
                     stack.append(NodeRawInteger(None, NodeInteger(None, val)))
-                elif val % self.MAGIC_VALUE == 0:
-                    stack.append(NodeInteger(None, int(val / self.MAGIC_VALUE)))
+                elif val % c1script.mappings.MAGIC_VALUE == 0:
+                    stack.append(NodeInteger(None, int(val / c1script.mappings.MAGIC_VALUE)))
                 else:
-                    stack.append(NodeNumber(None, val / decimal.Decimal(self.MAGIC_VALUE)))
+                    stack.append(NodeNumber(None, val / decimal.Decimal(c1script.mappings.MAGIC_VALUE)))
 
             elif insn.op in c1script.mappings.VAR_GETTERS:
                 if len(insn.args) != 1:
@@ -750,10 +746,6 @@ class Reconstructor:
             cases_count = self.process_arg(section, insn.args[1], "int16", insn.op)
             label_default = self.process_arg(section, insn.args[2], "label", insn.op)
 
-            consts = None
-            if isinstance(expr, NodeIdentifier) and expr.identifier in c1script.mappings.ALIEN_VARS_CONSTANTS:
-                consts = c1script.mappings.ALIEN_VARS_CONSTANTS[expr.identifier]
-
             if len(insn.args) != 3 + 2 * cases_count.value:
                 section.insns[index] = self.unhandled_line(insn, f"Wrong arguments count for `{insn.op}`")
                 return index + 1
@@ -763,15 +755,15 @@ class Reconstructor:
             for c in range(cases_count.value):
                 case = {
                     "label": self.process_arg(section, insn.args[3 + 2 * c], "label", insn.op),
-                    "value": self.process_arg(section, insn.args[3 + 2 * c + 1], "eval", insn.op),
+                    "value": self.get_const_by_value(
+                        expr,
+                        self.process_arg(section, insn.args[3 + 2 * c + 1], "eval", insn.op)
+                    ),
                     "block": None
                 }
 
                 if case["label"].identifier not in labels:
                     labels.append(case["label"].identifier)
-
-                if consts is not None and isinstance(case["value"], NodeInteger) and case["value"].value in consts:
-                    case["value"] = NodeIdentifier(case["value"].loc, consts[case["value"].value])
 
                 cases.append(case)
 
@@ -953,6 +945,54 @@ class Reconstructor:
 
         if index not in section.vars[kind]:
             section.vars[kind][index] = {"init": init}
+
+    def get_const_by_value(self, var, node):
+        if not isinstance(var, NodeIdentifier):
+            return node
+        if not isinstance(node, NodeInteger | NodeNumber | NodeRawInteger):
+            return node
+        if var.identifier not in c1script.mappings.ALIEN_VARS_CONSTANTS:
+            return node
+
+        consts = c1script.mappings.ALIEN_VARS_CONSTANTS[var.identifier]
+        raw_value = node.result
+
+        if raw_value in consts:
+            return NodeIdentifier(node.loc, consts[raw_value])
+
+        return node
+    
+    def get_const_flags_by_value(self, var, node):
+        if not isinstance(var, NodeIdentifier):
+            return node
+
+        if not isinstance(node, NodeInteger | NodeNumber | NodeRawInteger):
+            return node
+        if var.identifier not in c1script.mappings.ALIEN_VARS_CONSTANTS:
+            return node
+
+        consts = c1script.mappings.ALIEN_VARS_CONSTANTS[var.identifier]
+        raw_value = node.result
+        flags = []
+        rest = raw_value
+        for i in range(32):
+            const = 1 << i
+            if const in consts and (rest & const) != 0:
+                flags.append(consts[const])
+                rest = rest & ~const
+
+        if len(flags) == 0:
+            return node
+        
+        result = NodeIdentifier(node.loc, flags[0])
+
+        for flag in flags[1:]:
+            result = NodeBinaryExpr(node.loc, result, NodeIdentifier(node.loc, flag), "|")
+
+        if rest != 0:
+            result = NodeBinaryExpr(node.loc, result,  NodeRawInteger(node.loc, rest), "|")
+
+        return result
 
     def make_dependency(self, section, label_name):
         label = self.labels[label_name]

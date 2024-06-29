@@ -4,6 +4,7 @@ Syntax tree node types
 
 import decimal
 from types import NoneType
+import c1script.mappings
 
 class NodeLocation:
     def __init__(self, line, pos):
@@ -72,7 +73,7 @@ class NodeBase:
         
         text = prefix + self.description()
         if self.result != None:
-            text += f" (result = {self.result})"
+            text += f" (raw result = {self.result})"
         text += "\n"
         children = self.children()
         for i in range(len(children)):
@@ -335,21 +336,6 @@ class NodeExpr(NodeBase):
     def assert_operand_result_type(self, operator, node, klass):
         if not issubclass(node.result.__class__, klass):
             raise NodeException(f"Unsupported operand `{node.result}` for {operator}", node.loc)
-        
-    def num2bool(self, value):
-        if isinstance(value, bool):
-            return value
-
-        return value != 0
-    
-    def bool2num(self, value):
-        if not isinstance(value, bool):
-            return value
-
-        if value:
-            return 1
-        else:
-            return 0
 
 class NodeBinaryExpr(NodeExpr):
     def __init__(self, loc, left, right, operator):
@@ -357,7 +343,7 @@ class NodeBinaryExpr(NodeExpr):
         self.right = self.assert_type(right, NodeExpr)
         self.operator = self.assert_string(
             operator,
-            ["and", "or", "xor", ">", "<", ">=", "<=", "==", "!=", "+", "-", "*", "/", ">>", "<<"]
+            ["and", "or", "&", "|", ">", "<", ">=", "<=", "==", "!=", "+", "-", "*", "/", ">>", "<<"]
         )
         super().__init__(loc)
 
@@ -375,29 +361,26 @@ class NodeBinaryExpr(NodeExpr):
             self.assert_operand_result_type(self.operator, self.right, str)
             return self.left.result + self.right.result
 
-        self.assert_operand_result_type(self.operator, self.left, int | decimal.Decimal | bool)
-        self.assert_operand_result_type(self.operator, self.right, int | decimal.Decimal | bool)
-
-        if self.operator in ["<<", ">>"]:
-            self.assert_operand_result_type(self.operator, self.left, int)
-            self.assert_operand_result_type(self.operator, self.right, int)
+        self.assert_operand_result_type(self.operator, self.left, int)
+        self.assert_operand_result_type(self.operator, self.right, int)
 
         match self.operator:
-            case "and": return (self.num2bool(self.left.result) and self.num2bool(self.right.result))
-            case "or": return (self.num2bool(self.left.result) or self.num2bool(self.right.result))
-            case "xor": return (self.num2bool(self.left.result) != self.num2bool(self.right.result))
-            case ">": return (self.bool2num(self.left.result) > self.bool2num(self.right.result))
-            case "<": return (self.bool2num(self.left.result) < self.bool2num(self.right.result))
-            case ">=": return (self.bool2num(self.left.result) >= self.bool2num(self.right.result))
-            case "<=": return (self.bool2num(self.left.result) <= self.bool2num(self.right.result))
-            case "==": return (self.bool2num(self.left.result) == self.bool2num(self.right.result))
-            case "!=": return (self.bool2num(self.left.result) != self.bool2num(self.right.result))
-            case "+": return (self.bool2num(self.left.result) + self.bool2num(self.right.result))
-            case "-": return (self.bool2num(self.left.result) - self.bool2num(self.right.result))
-            case "*": return (self.bool2num(self.left.result) * self.bool2num(self.right.result))
-            case "/": return (self.bool2num(self.left.result) / self.bool2num(self.right.result))
-            case "<<": return (self.left.result << self.right.result)
-            case ">>": return (self.left.result >> self.right.result)
+            case "and": return int(bool(self.left.result) and bool(self.right.result)) * c1script.mappings.MAGIC_VALUE
+            case "or": return int(bool(self.left.result) or bool(self.right.result)) * c1script.mappings.MAGIC_VALUE
+            case "|": return self.left.result | self.right.result
+            case "&": return self.left.result & self.right.result
+            case ">": return int(self.left.result > self.right.result) * c1script.mappings.MAGIC_VALUE
+            case "<": return int(self.left.result < self.right.result) * c1script.mappings.MAGIC_VALUE
+            case ">=": return int(self.left.result >= self.right.result) * c1script.mappings.MAGIC_VALUE
+            case "<=": return int(self.left.result <= self.right.result) * c1script.mappings.MAGIC_VALUE
+            case "==": return int(self.left.result == self.right.result) * c1script.mappings.MAGIC_VALUE
+            case "!=": return int(self.left.result != self.right.result) * c1script.mappings.MAGIC_VALUE
+            case "+": return self.left.result + self.right.result
+            case "-": return self.left.result - self.right.result
+            case "*": return self.left.result * self.right.result / c1script.mappings.MAGIC_VALUE
+            case "/": return self.left.result * c1script.mappings.MAGIC_VALUE / self.right.result
+            case "<<": return self.left.result << (self.right.result / c1script.mappings.MAGIC_VALUE)
+            case ">>": return self.left.result >> (self.right.result / c1script.mappings.MAGIC_VALUE)
 
 class NodeUnaryExpr(NodeExpr):
     def __init__(self, loc, expr, operator):
@@ -415,12 +398,12 @@ class NodeUnaryExpr(NodeExpr):
         if self.expr.result == None:
             return
 
-        self.assert_operand_result_type(self.operator, self.expr, int | decimal.Decimal | bool)
+        self.assert_operand_result_type(self.operator, self.expr, int)
 
         match self.operator:
-            case "+": return self.bool2num(self.expr.result)
-            case "-": return -self.bool2num(self.expr.result)
-            case "!": return self.bool2num(self.expr.result) == 0
+            case "+": return self.expr.result
+            case "-": return -self.expr.result
+            case "!": return int(self.expr.result == 0) * c1script.mappings.MAGIC_VALUE
 
 class NodeFuncCall(NodeExpr):
     def __init__(self, loc, name, args):
@@ -463,7 +446,7 @@ class NodeNumber(NodeExpr):
         return f"{self.value} (number)"
     
     def eval(self):
-        return self.value
+        return int(self.value * c1script.mappings.MAGIC_VALUE)
 
 class NodeInteger(NodeExpr):
     def __init__(self, loc, value):
@@ -474,7 +457,7 @@ class NodeInteger(NodeExpr):
         return f"{self.value} (number)"
     
     def eval(self):
-        return self.value
+        return self.value * c1script.mappings.MAGIC_VALUE
 
 class NodeString(NodeExpr):
     def __init__(self, loc, value):
@@ -499,6 +482,9 @@ class NodeRawInteger(NodeExpr):
     def children(self):
         return [self.expr]
     
+    def eval(self):
+        return int(self.expr.result / c1script.mappings.MAGIC_VALUE)
+    
 class NodeBoolean(NodeExpr):
     def __init__(self, loc, value):
         self.value = self.assert_type(value, bool)
@@ -508,7 +494,7 @@ class NodeBoolean(NodeExpr):
         return f"\"{self.value}\" (boolean)"
     
     def eval(self):
-        return self.value
+        return int(self.value) * c1script.mappings.MAGIC_VALUE
     
 class NodeSpecialCondition(NodeBase):
     def __init__(self, loc, name, invert = False):

@@ -240,9 +240,10 @@ checkAnimFlag32(loadAsset2("CROC_CLD.ANI"), raw(8))
 | +, -                 |
 | >>, <<               |
 | ==, !=, >, <, >=, <= |
-| xor                  |
+| &                    |
+| |                    |
 | and                  |
-| xor                  |
+| or                   |
 
 ### Assignments
 

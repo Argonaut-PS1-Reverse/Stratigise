@@ -145,10 +145,11 @@ class Parser:
 
         self.expect(TokenType.INTEGER, "Expected integer index")
         index = self.parse_const_expr()
+        index_value = index.result / c1script.mappings.MAGIC_VALUE
 
-        if index.result >= c1script.mappings.VAR_MAP[kind.identifier]["limit"]:
+        if index_value >= c1script.mappings.VAR_MAP[kind.identifier]["limit"]:
             self.error(
-                f"Variable index `{index.result}` is too big",
+                f"Variable index `{index_value}` is too big",
                 index.loc
             )
 
@@ -578,21 +579,33 @@ class Parser:
     def parse_and_expr(self):
         loc = self.loc()
 
-        acc = self.parse_xor_expr()
+        acc = self.parse_bit_or_expr()
 
         while self.is_a(TokenType.KEYWORD, "and"):
             operator = self.take()
-            right = self.parse_xor_expr()
+            right = self.parse_bit_or_expr()
             acc = NodeBinaryExpr(loc, acc, right, operator)
 
         return acc
     
-    def parse_xor_expr(self):
+    def parse_bit_or_expr(self):
+        loc = self.loc()
+
+        acc = self.parse_bit_and_expr()
+
+        while self.is_a(TokenType.OPERATOR, "|"):
+            operator = self.take()
+            right = self.parse_bit_and_expr()
+            acc = NodeBinaryExpr(loc, acc, right, operator)
+
+        return acc
+    
+    def parse_bit_and_expr(self):
         loc = self.loc()
 
         acc = self.parse_comparison_expr()
 
-        while self.is_a(TokenType.KEYWORD, "xor"):
+        while self.is_a(TokenType.OPERATOR, "&"):
             operator = self.take()
             right = self.parse_comparison_expr()
             acc = NodeBinaryExpr(loc, acc, right, operator)
@@ -750,7 +763,7 @@ class Parser:
         self.next()
 
         value = self.parse_expr()
-        if not isinstance(value.result, int):
+        if not isinstance(value.result, int) or value.result % c1script.mappings.MAGIC_VALUE != 0:
             self.error(f"Expected const integer value", value.loc)
 
         self.expect(TokenType.CLOSE_PARENT, "Expected a `)` after `raw` value")
@@ -900,17 +913,17 @@ class Parser:
 
             match type:
                 case "int8":
-                    if not isinstance(arg.result, int):
+                    if not isinstance(arg.result, int) or arg.result % c1script.mappings.MAGIC_VALUE != 0:
                         self.error(f"Expected constant integer argument for {signature}", arg.loc)
-                    if arg.result < 0 or arg.result >= 256:
+                    if arg.result < 0 or arg.result >= 256 * c1script.mappings.MAGIC_VALUE:
                         self.error(f"Expected integer argument between 0 and 255 for {signature}", arg.loc)
 
                 case "int16":
-                    if not isinstance(arg.result, int):
+                    if not isinstance(arg.result, int) or arg.result % c1script.mappings.MAGIC_VALUE != 0:
                         self.error(f"Expected constant integer argument for {signature}", arg.loc)
 
                 case "int32":
-                    if not isinstance(arg.result, int):
+                    if not isinstance(arg.result, int) or arg.result % c1script.mappings.MAGIC_VALUE != 0:
                         self.error(f"Expected constant integer argument for {signature}", arg.loc)
 
                 case "string":
@@ -922,11 +935,11 @@ class Parser:
                         self.error(f"Expected trigger name argument for {signature}", arg.loc)
 
                 case "eval":
-                    if arg.result != None and not isinstance(arg.result, int | decimal.Decimal):
+                    if arg.result != None and not isinstance(arg.result, int):
                         self.error(f"Expected numeric expression argument for {signature}", arg.loc)
 
                 case "stack":
-                    if arg.result != None and not isinstance(arg.result, int | decimal.Decimal):
+                    if arg.result != None and not isinstance(arg.result, int):
                         self.error(f"Expected numeric expression argument for {signature}", arg.loc)
 
                 case _:
