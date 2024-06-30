@@ -189,8 +189,6 @@ class Formatter:
 
         if isinstance(node, NodeIf):
             self.format_if(node)
-        elif isinstance(node, NodeUnless):
-            self.format_unless(node)
         elif isinstance(node, NodeWhile):
             self.format_while(node)
         elif isinstance(node, NodeRepeatUntil):
@@ -219,13 +217,6 @@ class Formatter:
                 self.format_if(node.else_part, True)
             else:
                 self.format_block(node.else_part)
-
-    def format_unless(self, node):
-        self.assert_type(node, NodeUnless)
-
-        self.start_line(f"unless ({self.formatted_expr(node.condition)}) ")
-
-        self.format_block(node.block)
         
     def format_while(self, node):
         self.assert_type(node, NodeWhile)
@@ -354,6 +345,9 @@ class Formatter:
 
     def formatted_unary_expr(self, node, parent = None):
         self.assert_type(node, NodeUnaryExpr)
+
+        if isinstance(node.expr, NodeBinaryExpr):
+            return f"{node.operator}({self.formatted_expr(node.expr, node)})"
 
         return f"{node.operator}{self.formatted_expr(node.expr, node)}"
 

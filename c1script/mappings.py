@@ -286,6 +286,7 @@ ALIEN_VARS = {
     5: "a_angle_x",
     6: "a_angle_y",
     7: "a_angle_z",
+    12: "a_keys_held",
     13: "a_keys_pressed",
     15: "a_player_pos_x",
     16: "a_player_pos_y",
@@ -332,6 +333,25 @@ ALIEN_VARS = {
     90: "a_invincibility_blink"
 }
 
+KEY_CONSTANTS = {
+	(1 << 0): "KEY_FORWARD",
+	(1 << 1): "KEY_BACKWARD",
+	(1 << 2): "KEY_LEFT",
+	(1 << 3): "KEY_RIGHT",
+	(1 << 4): "KEY_JUMP",
+	(1 << 5): "KEY_5",
+	(1 << 6): "KEY_6",
+	(1 << 7): "KEY_SIDE_STEP_LEFT",
+	(1 << 8): "KEY_SIDE_STEP_RIGHT",
+	(1 << 9): "KEY_9",
+	(1 << 10): "KEY_10",
+	(1 << 11): "KEY_ATTACK",
+	(1 << 12): "KEY_TURN_180",
+	(1 << 13): "KEY_13",
+	(1 << 14): "KEY_CAMERA_DOWN",
+	(1 << 15): "KEY_CAMERA_UP"
+}
+
 ALIEN_VARS_CONSTANTS = {
     "a_map_style": { # Taken from CrocUtils
         MAGIC_VALUE * 0: "MAP_STYLE_ICE",
@@ -360,22 +380,6 @@ ALIEN_VARS_CONSTANTS = {
         MAGIC_VALUE * 23: "MAP_STYLE_BOULDER",
         MAGIC_VALUE * 24: "MAP_STYLE_ICECAVE"
 	},
-    "a_keys_pressed": {
-        (1 << 0): "KEY_FORWARD",
-        (1 << 1): "KEY_BACKWARD",
-        (1 << 2): "KEY_LEFT",
-        (1 << 3): "KEY_RIGHT",
-        (1 << 4): "KEY_JUMP",
-        (1 << 5): "KEY_5",
-        (1 << 6): "KEY_6",
-        (1 << 7): "KEY_7",
-        (1 << 8): "KEY_8",
-        (1 << 9): "KEY_9",
-        (1 << 10): "KEY_10",
-        (1 << 11): "KEY_ATTACK",
-        (1 << 12): "KEY_TURN_180",
-        (1 << 13): "KEY_13",
-        (1 << 14): "KEY_CAMERA_DOWN",
-        (1 << 15): "KEY_CAMERA_UP"
-	}
+    "a_keys_pressed": KEY_CONSTANTS,
+    "a_keys_held": KEY_CONSTANTS
 }
