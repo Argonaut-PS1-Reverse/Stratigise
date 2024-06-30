@@ -212,8 +212,6 @@ class Generator:
 
         if isinstance(node, NodeIf):
             self.generate_if(node)
-        elif isinstance(node, NodeUnless):
-            self.generate_unless(node)
         elif isinstance(node, NodeWhile):
             self.generate_while(node)
         elif isinstance(node, NodeRepeatUntil):
@@ -277,20 +275,6 @@ class Generator:
                 self.generate_block(else_part)
 
             self.set_label(label_end)
-        
-    def generate_unless(self, node):
-        self.assert_type(node, NodeUnless)
-
-        label_end = f"unless_{node.loc.line}_{node.loc.pos}_end"
-
-        self.start_line("If")
-        self.generate_eval(node.condition)
-        self.append_line(label_end)
-        self.newline()
-
-        self.generate_block(node.block)
-
-        self.set_label(label_end)
         
     def generate_while(self, node):
         self.assert_type(node, NodeWhile)

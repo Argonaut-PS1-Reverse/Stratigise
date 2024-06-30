@@ -47,6 +47,7 @@ class IdentifierData:
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
+        self.returned_tokens = []
         self.init_identifiers()
         self.next()
         self.cur_id_data = None
@@ -336,12 +337,11 @@ class Parser:
 
         match self.value():
             case "if": return self.parse_if()
-            case "unless": return self.parse_unless()
             case "while": return self.parse_while()
             case "repeat": return self.parse_repeat_until()
             case "for": return self.parse_for()
             case "switch": return self.parse_switch()
-            case _: self.error(f"Unexpected keyword {self.value()}, only `if`, `unless`, `while`, `repeat`, `for`, and `switch` are supported")
+            case _: self.error(f"Unexpected keyword {self.value()}, only `if`, `while`, `repeat`, `for`, and `switch` are supported")
 
     def parse_if(self):
         loc = self.loc()
@@ -368,9 +368,11 @@ class Parser:
         loc = self.loc()
 
         invert_locs = []
+        return_tokens = []
 
         while self.is_a(TokenType.OPERATOR, "!"):
             invert_locs.append(self.loc)
+            return_tokens.append(self.token)
             self.next()
 
         if self.is_a(TokenType.KEYWORD, list(c1script.mappings.SPECIAL_CONDITIONS.keys())):
@@ -380,12 +382,13 @@ class Parser:
             self.expect(TokenType.CLOSE_PARENT, "Expected a `)`")
             self.next()
 
-            return NodeSpecialCondition(loc, name, len(invert_locs) % 2 == 1)
-        
-        condition = self.parse_expr()
+            self.expect(TokenType.CLOSE_PARENT, "Expected a `)` after a special condition function")
 
-        for invert_loc in reversed(invert_locs):
-            condition = NodeUnaryExpr(invert_loc, condition, "!")
+            return NodeSpecialCondition(loc, name, len(invert_locs) % 2 == 1)
+
+        self.return_tokens(return_tokens)
+
+        condition = self.parse_expr()
 
         return condition
         
@@ -399,26 +402,6 @@ class Parser:
             return self.parse_block()
         else:
             self.error("Expected a block or another `if` after `else`")
-
-    def parse_unless(self):
-        loc = self.loc()
-
-        self.expect(TokenType.KEYWORD, "Expected `unless`", ["unless"])
-        self.next()
-        self.expect(TokenType.OPEN_PARENT, "Expected a `(` after `unless`")
-        self.next()
-        
-        condition = self.parse_expr()
-
-        self.expect(TokenType.CLOSE_PARENT, "Expected a `)` after condition")
-        self.next()
-
-        block = self.parse_block()
-
-        if self.is_a(TokenType.KEYWORD, "else"):
-            self.error("`else` is not supported for `unless`")
-        else:
-            return NodeUnless(loc, condition, block)
         
     def parse_while(self):
         loc = self.loc()
@@ -669,7 +652,8 @@ class Parser:
         if self.is_a(TokenType.OPERATOR, ["+", "-", "!"]):
             operator = self.take()
             expr = self.parse_unary_expr()
-            return NodeUnaryExpr(loc, expr, operator)
+            n = NodeUnaryExpr(loc, expr, operator)
+            return n
         else:
             return self.parse_value_expr()
         
@@ -788,11 +772,20 @@ class Parser:
             return NodeIdentifier(loc, self.take())
     
     def next(self):
-        self.token = next(self.tokens)
+        if len(self.returned_tokens) > 0:
+            self.token = self.returned_tokens[0]
+            del self.returned_tokens[0]
+        else:
+            self.token = next(self.tokens)
+
         self.cur_id_data = None
 
         if self.token.kind == TokenType.IDENTIFIER and self.token.data in self.identifiers:
             self.cur_id_data = self.identifiers[self.token.data]
+
+    def return_tokens(self, tokens):
+        self.returned_tokens = tokens + [self.token]
+        self.next()
         
     def take(self):
         data = self.token.data

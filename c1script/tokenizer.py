@@ -82,7 +82,6 @@ KEYWORDS = [
 	"strat",
 	"if",
 	"else",
-	"unless",
 	"while",
 	"repeat",
 	"until",

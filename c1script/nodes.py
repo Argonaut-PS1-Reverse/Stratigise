@@ -254,18 +254,6 @@ class NodeIf(NodeControl):
     def description(self):
         return "if"
 
-class NodeUnless(NodeControl):
-    def __init__(self, loc, condition, block):
-        super().__init__(loc)
-        self.condition = self.assert_type(condition, NodeExpr)
-        self.block = self.assert_type(block, NodeBlock)
-
-    def children(self):
-        return [self.condition, self.block]
-
-    def description(self):
-        return "unless"
-
 class NodeWhile(NodeControl):
     def __init__(self, loc, condition, imm, block):
         super().__init__(loc)
@@ -477,7 +465,7 @@ class NodeRawInteger(NodeExpr):
         super().__init__(loc)
 
     def description(self):
-        return f"{self.value} (raw integer, value = {self.expr.result})"
+        return f"raw integer, (value = {self.expr.result})"
     
     def children(self):
         return [self.expr]
