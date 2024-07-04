@@ -81,6 +81,13 @@ class NodeBase:
 
         return text
 
+    def walk(self):
+        yield self
+
+        for child in self.children():
+            for node in child.walk():
+                yield node
+
 class NodeFile(NodeBase):
     def __init__(self, loc, units):
         super().__init__(loc)

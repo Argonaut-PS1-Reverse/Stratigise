@@ -7,6 +7,17 @@ from c1script.asm_parser import *
 from c1script.nodes import *
 import c1script.mappings
 
+LOADER_HINTS = {
+    "loadObject": "model",
+	"loadAsset0": "model",
+	"loadAnim": "anim",
+	"loadAsset1": "sound",
+	"loadAsset2": "anim",
+	"loadAsset3": "sound",
+	"loadAsset4": "sound",
+	"loadAsset5": "anim"
+}
+
 class SectionType(enum.Enum):
     UNKNOWN = 0
     PROC = 1
@@ -22,6 +33,7 @@ class Section:
         self.insns = []
         self.vars = {}
         self.deps = []
+        self.var_hints = {}
 
     def __str__(self):
         match self.type:
@@ -289,7 +301,7 @@ class Reconstructor:
                         var_name = c1script.mappings.ALIEN_VARS[index.value]
                     self.use_var(section, vk, index.value, True)
 
-                    return NodeAssignment(None, NodeIdentifier(None, var_name), "=", expr)
+                    return self.create_assignment(section, var_name, expr)
             
         if insn.op == "ProcCall":
             if len(insn.args) != 1:
@@ -939,6 +951,48 @@ class Reconstructor:
         
         return self.unhandled_line(insn)
     
+    def create_assignment(self, section, var_name, expr):
+        if var_name not in section.var_hints:
+            section.var_hints[var_name] = None
+
+            if isinstance(expr, NodeFuncCall) and expr.name.identifier in LOADER_HINTS:
+                hint = None
+                res_name = "unknown"
+                if len(expr.args.args) > 0 and isinstance(expr.args.args[0], NodeString):
+                    res_name = expr.args.args[0].value.split(".")[0].replace("-", "_")
+                mo = re.match("([^\d_]+)[^\d]+(\d+)", var_name)
+                if mo:
+                    hint = mo.group(1) + "_" + LOADER_HINTS[expr.name.identifier] + "_" + res_name
+
+                if hint not in section.var_hints.values():
+                    section.var_hints[var_name] = hint
+
+            if (
+                isinstance(expr, NodeFuncCall) and expr.name.identifier == "checkAnimFlag32" and
+                len(expr.args.args) > 0 and isinstance(expr.args.args[0], NodeFuncCall) and
+                expr.args.args[0].name.identifier in LOADER_HINTS
+            ):
+                hint = None
+                res_name = "unknown"
+                if len(expr.args.args[0].args.args) > 0 and isinstance(expr.args.args[0].args.args[0], NodeString):
+                    res_name = expr.args.args[0].args.args[0].value.split(".")[0].replace("-", "_")
+                mo = re.match("([^\d_]+)[^\d]+(\d+)", var_name)
+                if mo:
+                    hint = mo.group(1) + "_" + LOADER_HINTS[expr.args.args[0].name.identifier] + "_" + res_name
+
+                if hint not in section.var_hints.values():
+                    section.var_hints[var_name] = hint
+        else:
+            section.var_hints[var_name] = None
+
+        if (
+            isinstance(expr, NodeBinaryExpr) and expr.operator in ["+", "-", "*", "/"] and
+            isinstance(expr.left, NodeIdentifier) and expr.left.identifier == var_name
+        ):
+            return NodeAssignment(None, NodeIdentifier(None, var_name), expr.operator + "=", expr.right)
+
+        return NodeAssignment(None, NodeIdentifier(None, var_name), "=", expr)
+
     def use_var(self, section, kind, index, init = False):
         if kind not in section.vars:
             section.vars[kind] = {}
@@ -1008,7 +1062,7 @@ class Reconstructor:
                     section.deps.append(i)
 
                 return
-            
+
     def generate_strats_trees(self):
         print("\nGenerating trees for strats...")
 
@@ -1026,6 +1080,8 @@ class Reconstructor:
             for s in sections:
                 units += s.trees
 
+            self.apply_var_hints(units, sections)
+
             self.strat_trees[strat] = NodeFile(None, units)
             print(f"  generated {strat} with {len(sections_indexes)} sections, {vars_count} variables")
 
@@ -1042,6 +1098,8 @@ class Reconstructor:
             for s in sections:
                 units += s.trees
             strat = "__unused"
+
+            self.apply_var_hints(units, sections)
 
             self.strat_trees[strat] = NodeFile(None, units)
             print(f"  generated {strat} with {len(unused_sections)} sections, {vars_count} variables")
@@ -1088,7 +1146,21 @@ class Reconstructor:
                 usages.append(NodeUse(None, NodeIdentifier(None, vk), NodeInteger(None, index), NodeIdentifier(None, name), comment))
 
         return preloads + usages, vars_count
-    
+
+    def apply_var_hints(self, units, sections):
+        hints = {}
+        for s in sections:
+            for var, hint in s.var_hints.items():
+                if var in hints:
+                    hints[var] = None
+                else:
+                    hints[var] = hint
+
+        for unit in units:
+            for node in unit.walk():
+                if isinstance(node, NodeIdentifier) and node.identifier in hints and hints[node.identifier] is not None:
+                    node.identifier = hints[node.identifier]
+
     def unhandled_line(self, insn, comment = None):
         self.unhandled_count += 1
 
