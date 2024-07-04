@@ -18,6 +18,31 @@ LOADER_HINTS = {
 	"loadAsset5": "anim"
 }
 
+LOGICAL_IDENTIFIERS = [
+    "a_jumping_up",
+    "a_jumping_down",
+    "a_player_is_staying_on",
+    "a_player_is_stomping_on",
+    "a_is_activated",
+    "a_has_door_key",
+    "a_is_landed",
+    "a_all_bonus_crystals_collected",
+    "a_particles_on",
+    "a_settings_lights_on",
+    "a_invincibility_blink"
+]
+
+FLAG_IDENTIFIERS = [
+    "a_keys_held",
+    "a_keys_pressed",
+    "a_entry_door_flags",
+    "a_surface_tilt_type",
+    "a_var23",
+    "a_var49",
+    "a_var50",
+    "a_var86"
+]
+
 class SectionType(enum.Enum):
     UNKNOWN = 0
     PROC = 1
@@ -428,6 +453,9 @@ class Reconstructor:
                     rval = self.get_const_flags_by_value(stack[-2], stack[-1])
                 else:
                     rval = stack[-1]
+
+                if op == "|" and (self.is_logical_node(stack[-2]) or self.is_logical_node(stack[-1])):
+                    op = "or"
 
                 stack = stack[:-2] + [NodeBinaryExpr(None, stack[-2], rval, op)]
 
@@ -1160,6 +1188,24 @@ class Reconstructor:
             for node in unit.walk():
                 if isinstance(node, NodeIdentifier) and node.identifier in hints and hints[node.identifier] is not None:
                     node.identifier = hints[node.identifier]
+
+    def is_logical_node(self, node):
+        if isinstance(node, NodeUnaryExpr) and node.operator == "!":
+            return True
+
+        if isinstance(node, NodeBinaryExpr) and node.operator in [">", "<", ">=", "<=", "==", "!=", "and", "or"]:
+            return True
+
+        if isinstance(node, NodeIdentifier) and node.identifier in LOGICAL_IDENTIFIERS:
+            return True
+
+        if (
+            isinstance(node, NodeBinaryExpr) and node.operator == "&" and
+            isinstance(node.left, NodeIdentifier) and node.left.identifier in FLAG_IDENTIFIERS
+        ):
+            return True
+
+        return False
 
     def unhandled_line(self, insn, comment = None):
         self.unhandled_count += 1
