@@ -7,7 +7,6 @@ Script to convert a folder of files into a Croc: Legend of the Gobbos .WAD and
 from os import listdir
 from os.path import isfile, join, split
 import argparse
-import sys
 
 def countRun(data, width=1):
 	for i in range(width, len(data)):
@@ -16,82 +15,99 @@ def countRun(data, width=1):
 	
 	return len(data)
 
-tobyte = lambda i: i.to_bytes(1, 'little', signed=True)
+toSignedByte = lambda i: int.from_bytes(i.to_bytes(1, 'little', signed=True), 'little')
 
-def compressByte(input):
+def _compress(data, chunkSize=1, minRun=3):
 	"""
-	Preform byte-wise run length encoding
+	Compress data using Croc's RLE format.
+	
+	chunkSize - 1 for byte compression or 2 for word compression
+	minRun - minium run, 3 for byte compression or 2 for word compression
 	"""
 	
-	output = bytearray()
-	buf = bytearray()
+	# Append data with zeros if it's size is not a multiple of the chunk size.
+	# It's a HACK but CrocUtils seems to round up the output size if needed
+	# and I can assume that's what the game does as well.
+	if (len(data) % chunkSize != 0):
+		data += b"\x00" * (chunkSize - (len(data) % chunkSize))
 	
-	def outputLiterals():
-		nonlocal buf, output
-		if len(buf) > 0:
-			output += tobyte(-len(buf))
-			output += buf
-			buf = bytearray()
-	
+	maxRun = minRun + 127
+	output = bytearray(len(data))
+	outIndex = 0
+	literals = 0
 	i = 0
 	
-	while True:
-		runlen = countRun(input[i:i+130])
+	def runLength(data, index, chunkSize, maxRun):
+		"""
+		Determine the optimal run length for the chunk at index
+		"""
 		
-		if len(buf) >= 127 or runlen >= 3:
-			outputLiterals()
+		assert(index < len(data))
 		
-		if runlen >= 3:
-			output += tobyte(runlen - 3)
-			output.append(input[i])
-			i += runlen
+		chunk = data[chunkSize*index:chunkSize*(index+1)]
+		
+		assert(chunk != b'')
+		
+		for i in range(1, maxRun):
+			if data[(index+i)*chunkSize:(index+i+1)*chunkSize] != chunk:
+				return i
 		else:
-			buf.append(input[i])
-			i += 1
-		
-		if i == len(input):
-			outputLiterals()
-			break
+			return maxRun
 	
-	return bytes(output)
+	def putLiterals(data, output, fromIndex, toIndex, count, chunkSize):
+		"""
+		Output literals from the input data to an output buffer
+		"""
+		
+		if count > 0:
+			output[toIndex] = toSignedByte(-count)
+			
+			for i in range(chunkSize * count):
+				output[toIndex + i + 1] = data[chunkSize * fromIndex + i]
+			
+			return 1 + chunkSize * count
+		else:
+			return 0
+	
+	def putRun(data, output, fromIndex, toIndex, minRun, chunkSize, runLength):
+		"""
+		Encode a run marker
+		"""
+		
+		output[toIndex] = toSignedByte(runLength - minRun)
+		
+		for i in range(chunkSize):
+			output[toIndex + i + 1] = data[chunkSize * fromIndex + i]
+		
+		return 1 + chunkSize
+	
+	while i < (len(data) // chunkSize):
+		runlen = runLength(data, i, chunkSize, maxRun)
+		
+		if runlen < minRun:
+			literals += 1
+			i += 1
+		else:
+			outIndex += putLiterals(data, output, i - literals, outIndex, literals, chunkSize)
+			literals = 0
+			
+			outIndex += putRun(data, output, i, outIndex, minRun, chunkSize, runlen)
+			i += runlen
+		
+		if literals >= 128:
+			outIndex += putLiterals(data, output, i - literals, outIndex, literals, chunkSize)
+			literals = 0
+	
+	# Output any remaining literals
+	outIndex += putLiterals(data, output, i - literals, outIndex, literals, chunkSize)
+	
+	return output[:outIndex]
 
-def compressWord(input):
-	"""
-	Preform word-wise run length encoding (only works for inputs where
-	len(input) % 2 == 0)
-	"""
-	
-	output = bytearray()
-	buf = bytearray()
-	
-	def outputLiterals():
-		nonlocal buf, output
-		if len(buf) > 0:
-			output += tobyte(-(len(buf)//2))
-			output += buf
-			buf = bytearray()
-	
-	i = 0
-	
-	while True:
-		runlen = countRun(input[2*i:2*(i+129)], 2)//2
-		
-		if len(buf) >= 254 or runlen >= 2:
-			outputLiterals()
-		
-		if runlen >= 2:
-			output += tobyte(runlen - 2)
-			output += input[2*i:2*i+2]
-			i += runlen
-		else:
-			buf += input[2*i:2*i+2]
-			i += 1
-		
-		if i == len(input)//2:
-			outputLiterals()
-			break
-	
-	return bytes(output)
+def compress(data, chunkSize=1, minRun=3):
+	try:
+		return _compress(data, chunkSize, minRun)
+	except:
+		return None
 
 def getFiles(dir):
 	"""
@@ -126,19 +142,19 @@ def makeWad(input, output, *, use_compression=True, print_index=True):
 		compression = "u"
 		
 		if use_compression:
-			# Byte RLE (have to do this before word so we don't accidently
-			# compress twice - let's not ask how I know)
-			cb_content = compressByte(content)
+			# Byte RLE
+			cb_content = compress(content)
 			
-			# Word RLE (only when input length is even)
-			if len(content) % 2 == 0:
-				cw_content = compressWord(content)
-				if len(cw_content) < len(content):
-					content = cw_content
-					length = str(len(cw_content))
-					compression = "w"
+			# Word RLE
+			cw_content = compress(content, 2, 2)
 			
-			if len(cb_content) < len(content):
+			# Determine best compression
+			if cw_content and len(cw_content) < len(content):
+				content = cw_content
+				length = str(len(cw_content))
+				compression = "w"
+			
+			if cb_content and len(cb_content) < len(content):
 				content = cb_content
 				length = str(len(cb_content))
 				compression = "b"
@@ -157,25 +173,27 @@ def makeWad(input, output, *, use_compression=True, print_index=True):
 
 def main():
 	args = argparse.ArgumentParser(prog="dir2wad", description="Convert a folder to a Croc: Legend of the Gobbos WAD/IDX pair")
-	args.add_argument("-C", "--no-compress", action='store_true', help="Do not compress files")
+	args.add_argument("-c", "--compress", action='store_true', help="Try to compress files; this may take longer but produces a smaller WAD")
 	args.add_argument("-q", "--quiet", action='store_true', help="Do not print contents of the index file while building wad")
 	args.add_argument("input", help="The directory to turn into a WAD file")
 	args.add_argument("output", help="The base name of the WAD (e.g. without .WAD/.IDX)")
 	args = args.parse_args()
 	
-	makeWad(args.input, args.output, use_compression = not args.no_compress, print_index = not args.quiet)
+	makeWad(args.input, args.output, use_compression = args.compress, print_index = not args.quiet)
 
 def test_compression():
+	
 	TEST_DATA = b"\xed\xef\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x0d\x77\x21\x21\x22\x21\x21\x00\x00\x00\x00\x00\x00\x00\x00\x3a"
 	
-	import binascii
+	f = lambda s: ' '.join([s[2*i:2*i+2] for i in range(len(s)//2)])
 	
-	byte = compressByte(TEST_DATA)
-	word = compressWord(TEST_DATA)
+	byte = _compress(TEST_DATA)
+	word = _compress(TEST_DATA, 2, 2)
 	
-	print("orig: len =", len(TEST_DATA))
-	print("#1  :", binascii.hexlify(byte), len(byte)/len(TEST_DATA))
-	print("#2  :", binascii.hexlify(word), len(word)/len(TEST_DATA))
+	print("#0  :", f(TEST_DATA.hex()), "     ", len(TEST_DATA))
+	print("#1  :", f(byte.hex()), "     ", len(byte), len(byte)/len(TEST_DATA))
+	print("#2  :", f(word.hex()), "     ", len(word), len(word)/len(TEST_DATA))
 
 if (__name__ == "__main__"):
+	# test_compression()
 	main()
