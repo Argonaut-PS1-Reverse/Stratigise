@@ -181,19 +181,5 @@ def main():
 	
 	makeWad(args.input, args.output, use_compression = args.compress, print_index = not args.quiet)
 
-def test_compression():
-	
-	TEST_DATA = b"\xed\xef\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x0d\x77\x21\x21\x22\x21\x21\x00\x00\x00\x00\x00\x00\x00\x00\x3a"
-	
-	f = lambda s: ' '.join([s[2*i:2*i+2] for i in range(len(s)//2)])
-	
-	byte = _compress(TEST_DATA)
-	word = _compress(TEST_DATA, 2, 2)
-	
-	print("#0  :", f(TEST_DATA.hex()), "     ", len(TEST_DATA))
-	print("#1  :", f(byte.hex()), "     ", len(byte), len(byte)/len(TEST_DATA))
-	print("#2  :", f(word.hex()), "     ", len(word), len(word)/len(TEST_DATA))
-
 if (__name__ == "__main__"):
-	# test_compression()
 	main()
